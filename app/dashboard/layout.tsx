@@ -1,5 +1,5 @@
 import SideNav from "@/app/ui/dashboard/sidenav";
-import { auth } from "@/auth";
+import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -18,7 +18,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
 
         // If user doesn't exist or is not active, redirect to login
         if (!user || !user.isActive) {
-            redirect("/login")
+            await signOut({ redirectTo: "/login" })
         }
     }
 

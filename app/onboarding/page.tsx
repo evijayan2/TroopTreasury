@@ -1,4 +1,4 @@
-import { auth } from "@/auth"
+import { auth, signOut } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { TroopSettingsForm } from "@/components/settings/troop-settings-form"
 import { redirect } from "next/navigation"
@@ -6,7 +6,7 @@ import { redirect } from "next/navigation"
 export default async function Page() {
     const session = await auth()
     if (!session || session.user.role !== "ADMIN") {
-        redirect("/login")
+        await signOut({ redirectTo: "/login" })
     }
 
     const settings = await prisma.troopSettings.findFirst()
