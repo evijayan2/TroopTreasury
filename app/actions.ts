@@ -9,6 +9,7 @@ import { Resend } from "resend"
 import { AuthError } from "next-auth"
 import { Decimal } from "decimal.js"
 import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
 
 // Initialize Resend (requires env var RESEND_API_KEY)
 const resendApiKey = process.env.RESEND_API_KEY
@@ -778,11 +779,12 @@ export async function updateTroopSettings(prevState: any, formData: FormData) {
         }
 
         revalidatePath("/dashboard")
-        return { success: true, message: "Troop settings updated" }
     } catch (error) {
         console.error("Troop Settings Error:", error)
         return { error: "Failed to save settings" }
     }
+
+    redirect("/dashboard")
 }
 
 export async function updateRolePermissions(prevState: any, formData: FormData) {
