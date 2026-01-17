@@ -63,7 +63,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
         // or `/setup/troop` to avoid this layout entirely.
 
         if (!settings) {
-            // redirect("/dashboard/onboarding") // This causes loop if onboarding uses this layout
+            redirect("/onboarding")
         }
     }
 

@@ -11,13 +11,12 @@ export default async function Page() {
 
     const settings = await prisma.troopSettings.findFirst()
 
-    // If settings exist and have a name, maybe we should redirect to dashboard?
-    // But user might want to edit it here if they navigated manually.
-    // For automatic redirection logic, we'll handle it in the layout/middleware.
-
     return (
-        <div className="p-6">
-            <TroopSettingsForm initialData={settings} className="max-w-xl mx-auto mt-10" />
+        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6">
+            <div className="w-full max-w-xl">
+                <h1 className="text-3xl font-bold mb-6 text-center">Setup Troop Configuration</h1>
+                <TroopSettingsForm initialData={settings} className="bg-white p-6 rounded-lg shadow-md" />
+            </div>
         </div>
     )
 }
