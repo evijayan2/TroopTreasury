@@ -6,6 +6,7 @@ import { ThemeCustomizer } from "@/components/theme-customizer"
 import { auth } from "@/auth"
 import { getRolePermissions, Permission } from "@/lib/rbac"
 import { Role } from "@prisma/client"
+import { prisma } from "@/lib/prisma"
 
 export default async function SideNav() {
     const session = await auth()
@@ -32,6 +33,9 @@ export default async function SideNav() {
         userPermissions = allPermissions[role] || []
     }
 
+    const settings = await prisma.troopSettings.findFirst()
+    const logoSrc = settings?.logoBase64 ? settings.logoBase64 : "/trooptreasury-logo-main.png"
+
     return (
         <div className="flex h-full flex-col border-r bg-gray-100/40 dark:bg-gray-800/40 px-3 py-4 md:px-2">
             <Link
@@ -40,12 +44,13 @@ export default async function SideNav() {
             >
                 <div className="flex w-full items-center justify-start">
                     <Image
-                        src="/trooptreasury-logo-main.png"
+                        src={logoSrc}
                         alt="TroopTreasury Logo"
                         width={160}
                         height={160}
                         className="w-full h-auto object-contain"
                         priority
+                        unoptimized={!settings?.logoBase64} // Disable optimization for local large file
                     />
                 </div>
             </Link>
