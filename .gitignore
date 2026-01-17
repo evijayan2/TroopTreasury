@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/lib/generated/prisma
+
+# local development
+.gemini/
+.vscode/
+.idea/
+*.log
+Thumbs.db

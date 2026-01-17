@@ -1,0 +1,36 @@
+import { Role } from "@prisma/client"
+
+export type Permission =
+    | "VIEW_DASHBOARD"
+    | "VIEW_SCOUTS"
+    | "VIEW_TRANSACTIONS"
+    | "VIEW_CAMPOUTS"
+    | "VIEW_REPORTS"
+    | "VIEW_USERS"
+    | "VIEW_SETTINGS"
+    | "MANAGE_SCOUTS"
+    | "MANAGE_FINANCE"
+    | "MANAGE_USERS"
+
+// Default permissions if none are set in DB
+export const DEFAULT_PERMISSIONS: Record<Role, Permission[]> = {
+    ADMIN: [
+        "VIEW_DASHBOARD", "VIEW_SCOUTS", "VIEW_TRANSACTIONS", "VIEW_CAMPOUTS", "VIEW_REPORTS", "VIEW_USERS", "VIEW_SETTINGS",
+        "MANAGE_SCOUTS", "MANAGE_FINANCE", "MANAGE_USERS"
+    ],
+    FINANCIER: [
+        "VIEW_DASHBOARD", "VIEW_SCOUTS", "VIEW_TRANSACTIONS", "VIEW_CAMPOUTS", "VIEW_REPORTS", "VIEW_SETTINGS",
+        "MANAGE_FINANCE", "MANAGE_SCOUTS"
+    ],
+    LEADER: [
+        "VIEW_DASHBOARD", "VIEW_SCOUTS", "VIEW_CAMPOUTS", "VIEW_REPORTS",
+        "MANAGE_SCOUTS"
+    ],
+    PARENT: [
+        "VIEW_DASHBOARD", "VIEW_SCOUTS", "VIEW_CAMPOUTS",
+        "MANAGE_SCOUTS"
+    ],
+    SCOUT: [
+        "VIEW_DASHBOARD"
+    ]
+}
