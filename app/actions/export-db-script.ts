@@ -43,9 +43,9 @@ export async function generateReplayJson() {
   const campoutAdultsToExport = allCampoutAdults.filter(ca => !adminIds.has(ca.adultId))
   const adultExpensesToExport = allAdultExpenses.filter(ae => !adminIds.has(ae.adultId))
   const transactionsToExport = allTransactions
-    .filter(t => !t.userId || !adminIds.has(t.userId))
     .map(t => ({
       ...t,
+      userId: t.userId && adminIds.has(t.userId) ? null : t.userId,
       approvedBy: t.approvedBy && adminIds.has(t.approvedBy) ? null : t.approvedBy
     }))
 
