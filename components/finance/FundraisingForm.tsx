@@ -17,8 +17,8 @@ const schema = z.object({
     startDate: z.string().min(1, "Start date is required"),
     endDate: z.string().optional(),
     goal: z.string().min(1, "Goal is required"),
-    isComplianceApproved: z.boolean().default(false),
-    ibaPercentage: z.string().default("0"),
+    isComplianceApproved: z.boolean(),
+    ibaPercentage: z.string(),
 })
 
 type FormData = z.infer<typeof schema>
