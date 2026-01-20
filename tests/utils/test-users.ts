@@ -1,4 +1,4 @@
-import { PrismaClient } from '@/lib/generated/client';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 export const TEST_USERS = {

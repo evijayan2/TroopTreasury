@@ -1,7 +1,7 @@
 import { test as base, Page } from '@playwright/test';
 import { getTestPrismaClient, cleanupDatabase, setupTroopSettings } from '../utils/db-helper';
 import { seedTestUsers, TEST_USERS } from '../utils/test-users';
-import type { PrismaClient } from '@/lib/generated/client';
+import type { PrismaClient } from '@prisma/client';
 
 type AuthFixtures = {
     prisma: PrismaClient;

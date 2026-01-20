@@ -1,4 +1,4 @@
-const { PrismaClient, TransactionType } = require('../lib/generated/client')
+const { PrismaClient, TransactionType } = require('@prisma/client')
 const { Pool } = require('pg')
 const { PrismaPg } = require('@prisma/adapter-pg')
 const { Decimal } = require('decimal.js')

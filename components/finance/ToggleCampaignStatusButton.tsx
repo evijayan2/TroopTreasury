@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { PlayCircle, StopCircle } from "lucide-react"
 import { toggleFundraisingStatus } from "@/app/actions/finance"
 import { toast } from "sonner"
-import { FundraisingStatus } from "@/lib/generated/client"
+import { FundraisingStatus } from "@prisma/client"
 // Prisma Enums are usually available if exported from client. 
 // But safely we can accept props as string or use the Enum if supported.
 // Let's use string checks to avoid client-side bundling issues if any.

@@ -43,3 +43,16 @@ Secure, simple finance management for your scout troop.
 - **Styling**: Tailwind CSS
 - **Components**: Radix UI / shadcn/ui
 - **Icons**: Lucide React
+
+## 📘 Documentation
+
+For a detailed guide on how to use the application, including managing usage for Parents, Scouts, and Administrators, please refer to the **[User Guide](./USER_GUIDE.md)**.
+
+## 🚀 Deployments
+
+| Environment | Status | URL |
+| :--- | :--- | :--- |
+| **Production** | 🟢 Live | [https://trooptreasury.vercel.app](https://trooptreasury.vercel.app) |
+| **Preview** | 🟡 Dynamic | *Available via Pull Request comments or Vercel Dashboard* |
+
+> **Note**: Access to the production URL requires authorization. Please contact the administrator for an invite.

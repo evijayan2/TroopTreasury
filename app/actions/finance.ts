@@ -5,7 +5,7 @@ import { auth } from "@/auth"
 import { z } from "zod"
 import { revalidatePath } from "next/cache"
 import { Decimal } from "decimal.js"
-import { BudgetCategoryType, TransactionType, FundraisingStatus } from "@/lib/generated/client"
+import { BudgetCategoryType, TransactionType, FundraisingStatus } from "@prisma/client"
 
 // --- Budget Management ---
 
