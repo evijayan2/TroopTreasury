@@ -14,7 +14,7 @@ import { toast } from "sonner"
 
 const schema = z.object({
     year: z.string().min(1, "Budget Name/Year is required"),
-    isActive: z.boolean().default(true),
+    isActive: z.boolean(),
 })
 
 type FormData = z.infer<typeof schema>
