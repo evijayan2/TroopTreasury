@@ -29,6 +29,7 @@ Secure, simple finance management for your scout troop.
 4. Initialize the database:
    ```bash
    npx prisma db push
+   npx prisma migrate dev
    ```
 5. Run the development server:
    ```bash

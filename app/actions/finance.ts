@@ -162,15 +162,15 @@ export async function createFundraiser(prevState: any, formData: FormData) {
     const rawData = {
         name: formData.get("name"),
         startDate: formData.get("startDate"),
-        endDate: formData.get("endDate"),
+        endDate: formData.get("endDate") || undefined,
         goal: formData.get("goal"),
         isComplianceApproved: formData.get("isComplianceApproved") === "on",
         ibaPercentage: formData.get("ibaPercentage") || "0",
         type: formData.get("type") || "GENERAL",
-        productName: formData.get("productName"),
-        productPrice: formData.get("productPrice"),
-        productCost: formData.get("productCost"),
-        productIba: formData.get("productIba"),
+        productName: formData.get("productName") || undefined,
+        productPrice: formData.get("productPrice") || undefined,
+        productCost: formData.get("productCost") || undefined,
+        productIba: formData.get("productIba") || undefined,
     }
 
     const validatedFields = fundraisingSchema.safeParse(rawData)
