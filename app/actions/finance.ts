@@ -178,9 +178,7 @@ export async function createFundraiser(prevState: any, formData: FormData) {
         return { error: "Invalid fields", issues: validatedFields.error.flatten() }
     }
 
-    if (!validatedFields.success) {
-        return { error: "Invalid fields", issues: validatedFields.error.flatten() }
-    }
+
 
     const { name, startDate, endDate, goal, isComplianceApproved, ibaPercentage, type, productName, productPrice, productCost, productIba } = validatedFields.data
 
