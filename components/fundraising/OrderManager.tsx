@@ -12,9 +12,20 @@ import { addOrder, deleteOrder, toggleOrderDelivered } from "@/app/actions/finan
 import { toast } from "sonner"
 import { Trash2 } from "lucide-react"
 
+type SerializedCampaign = Omit<FundraisingCampaign, 'goal' | 'productPrice' | 'productCost' | 'productIba'> & {
+    goal: string
+    productPrice: string | null
+    productCost: string | null
+    productIba: string | null
+}
+
+type SerializedOrder = Omit<FundraisingOrder, 'amountPaid'> & {
+    amountPaid: string
+}
+
 type Props = {
-    campaign: FundraisingCampaign
-    orders: FundraisingOrder[]
+    campaign: SerializedCampaign
+    orders: SerializedOrder[]
     scoutId?: string
 }
 

@@ -50,8 +50,17 @@ export default async function ScoutCampaignPage({ params }: { params: Promise<{ 
             </div>
 
             <OrderManager
-                campaign={campaign}
-                orders={orders}
+                campaign={{
+                    ...campaign,
+                    goal: campaign.goal.toString(),
+                    productPrice: campaign.productPrice?.toString() ?? null,
+                    productCost: campaign.productCost?.toString() ?? null,
+                    productIba: campaign.productIba?.toString() ?? null,
+                }}
+                orders={orders.map(o => ({
+                    ...o,
+                    amountPaid: o.amountPaid.toString()
+                }))}
                 scoutId={scout.id}
             />
         </div>

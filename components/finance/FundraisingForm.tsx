@@ -98,14 +98,14 @@ export function FundraisingForm({ triggerButton }: { triggerButton: React.ReactN
                     <div>
                         <Label>Campaign Type</Label>
                         <div className="flex gap-4 mt-2">
-                            <label className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500">
+                            <label className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 dark:has-[:checked]:bg-blue-900/40 dark:has-[:checked]:border-blue-700">
                                 <input type="radio" value="GENERAL" {...register("type")} className="text-blue-600 focus:ring-blue-500" />
                                 <div>
                                     <span className="block font-medium">General / Donation</span>
                                     <span className="text-xs text-muted-foreground">% based allocation</span>
                                 </div>
                             </label>
-                            <label className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500">
+                            <label className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 dark:has-[:checked]:bg-blue-900/40 dark:has-[:checked]:border-blue-700">
                                 <input type="radio" value="PRODUCT_SALE" {...register("type")} className="text-blue-600 focus:ring-blue-500" />
                                 <div>
                                     <span className="block font-medium">Product Sale</span>
@@ -116,8 +116,8 @@ export function FundraisingForm({ triggerButton }: { triggerButton: React.ReactN
                     </div>
 
                     {type === 'PRODUCT_SALE' && (
-                        <div className="space-y-4 p-4 bg-slate-50 rounded-lg border">
-                            <h4 className="font-semibold text-sm text-slate-700">Product Details</h4>
+                        <div className="space-y-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border">
+                            <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-300">Product Details</h4>
                             <div>
                                 <Label htmlFor="productName">Product Name</Label>
                                 <Input id="productName" placeholder="e.g. Popcorn Box" {...register("productName")} />

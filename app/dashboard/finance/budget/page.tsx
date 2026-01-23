@@ -110,7 +110,7 @@ function BudgetAccordionItem({ budget, isAdmin, transactions }: { budget: any, i
                                         "use server"
                                         await updateBudgetStatus(budget.id, 'CLOSED')
                                     }}>
-                                        <Button size="sm" variant="outline" className="text-gray-600 border-gray-200 hover:bg-gray-50">Close Budget</Button>
+                                        <Button size="sm" variant="outline" className="text-gray-600 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">Close Budget</Button>
                                     </form>
                                 )}
                             </div>

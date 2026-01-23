@@ -45,8 +45,8 @@ export default async function FundraisingPage() {
                     const isClosed = camp.status === 'CLOSED'
 
                     return (
-                        <Card key={camp.id} className={`relative ${isClosed ? 'opacity-70 bg-gray-50' : ''}`}>
-                            <CardHeader>
+                        <Card key={camp.id} className={`relative ${isClosed ? 'opacity-70 bg-gray-50 dark:bg-slate-900/50' : ''}`}>
+                            <CardHeader className="pb-2">
                                 <div className="flex justify-between items-start gap-4">
                                     <Link href={`/dashboard/finance/fundraising/${camp.id}`} className="space-y-1 block flex-1 hover:opacity-80 transition-opacity">
                                         <CardTitle className="leading-tight flex items-center gap-2">

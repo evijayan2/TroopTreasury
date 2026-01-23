@@ -12,10 +12,10 @@ export default async function Page() {
     const settings = await prisma.troopSettings.findFirst()
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6">
-            <div className="w-full max-w-xl">
-                <h1 className="text-3xl font-bold mb-6 text-center">Setup Troop Configuration</h1>
-                <TroopSettingsForm initialData={settings} className="bg-white p-6 rounded-lg shadow-md" />
+        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-background p-6">
+            <div className="w-full max-w-2xl text-center space-y-6">
+                <h1 className="text-3xl font-bold tracking-tight">Complete Troop Setup</h1>
+                <TroopSettingsForm initialData={settings} className="bg-white dark:bg-card p-6 rounded-lg shadow-md" />
             </div>
         </div>
     )

@@ -162,7 +162,7 @@ export function ProductSalesTracker({ campaign, scouts, initialSales, liveOrderS
                                 const hasActivity = qty > 0
 
                                 return (
-                                    <TableRow key={scout.id} className={hasActivity ? "bg-slate-50/50" : ""}>
+                                    <TableRow key={scout.id} className={hasActivity ? "bg-slate-50/50 dark:bg-slate-900/50" : ""}>
                                         <TableCell className="font-medium">{scout.name}</TableCell>
                                         <TableCell className="text-center">
                                             {liveOrderStats[scout.id] ? (

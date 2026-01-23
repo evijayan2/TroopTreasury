@@ -103,7 +103,7 @@ function UserCreationForm({ onSuccess }: { onSuccess: () => void }) {
             </div>
 
             {role === 'PARENT' && (
-                <div className="space-y-2 p-4 border rounded-md bg-gray-50">
+                <div className="space-y-2 p-4 border rounded-md bg-gray-50 dark:bg-muted/50">
                     <Label>Scouts associated with this Parent</Label>
                     <div className="space-y-2">
                         {childScouts.map((scout, index) => (

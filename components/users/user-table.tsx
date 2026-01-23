@@ -29,8 +29,8 @@ export function UserTable({ users, allScouts }: { users: any[], allScouts: any[]
                 </TableHeader>
                 <TableBody>
                     {users.map((user) => (
-                        <TableRow key={user.id} className={!user.isActive ? "bg-gray-50 opacity-75" : ""}>
-                            <TableCell className="font-medium">{user.name}</TableCell>
+                        <TableRow key={user.id} className={!user.isActive ? "bg-gray-50 opacity-75 dark:bg-slate-900/50" : ""}>
+                            <TableCell className="font-medium">{user.name || "N/A"}</TableCell>
                             <TableCell>{user.email}</TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-2">

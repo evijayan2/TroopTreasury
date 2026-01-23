@@ -28,7 +28,7 @@ export default async function MyFundraisingPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {campaigns.map(campaign => (
                     <Link href={`/dashboard/my-fundraising/${campaign.id}`} key={campaign.id}>
-                        <Card className="hover:bg-slate-50 transition-colors cursor-pointer h-full">
+                        <Card className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer h-full">
                             <CardHeader>
                                 <div className="flex justify-between items-start">
                                     <CardTitle>{campaign.name}</CardTitle>

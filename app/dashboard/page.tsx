@@ -96,7 +96,7 @@ export default async function Page() {
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {cards.map((card, idx) => (
                     <Link href={card.link} key={idx}>
-                        <Card className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer">
+                        <Card className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">
                                     {card.title}

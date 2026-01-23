@@ -187,10 +187,10 @@ export function FundraisingForm({ scouts }: { scouts: { id: string, name: string
                 ))}
             </div>
 
-            <Card className={remainder < 0 ? "border-red-500 bg-red-50" : "bg-gray-50"}>
+            <Card className={remainder < 0 ? "border-red-500 bg-red-50 dark:bg-red-900/20" : "bg-gray-50 dark:bg-slate-800/50"}>
                 <CardContent className="pt-6 flex justify-between items-center">
                     <div>
-                        <p className="text-sm font-medium text-gray-500">Remainder (To Troop Fund)</p>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Remainder (To Troop Fund)</p>
                         <p className={`text-2xl font-bold ${remainder < 0 ? "text-red-600" : ""}`}>
                             {formatCurrency(remainder)}
                         </p>
@@ -202,6 +202,6 @@ export function FundraisingForm({ scouts }: { scouts: { id: string, name: string
                     </div>
                 </CardContent>
             </Card>
-        </form>
+        </form >
     )
 }

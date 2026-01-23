@@ -32,8 +32,8 @@ export function ScoutTable({ scouts }: { scouts: any[] }) {
                             <a href={`/dashboard/scouts/${scout.id}`} className="block w-full h-full flex items-center gap-2">
                                 {scout.name}
                                 {scout.isLinked && (
-                                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                        My Scout
+                                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800">
+                                        {scout.role}
                                     </Badge>
                                 )}
                             </a>

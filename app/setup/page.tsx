@@ -12,7 +12,7 @@ export default async function Page() {
     }
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
+        <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50 dark:bg-background">
             <div className="w-full max-w-md">
                 <div className="mb-8 text-center">
                     <h1 className="text-4xl font-bold text-primary mb-2">TroopTreasury</h1>
