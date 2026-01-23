@@ -67,9 +67,9 @@ export function ThemeCustomizer({ initialColor = "orange", initialTheme }: Theme
     // Prevent hydration mismatch
     if (!mounted) {
         return (
-            <Button variant="ghost" size="icon" className="w-full justify-start md:justify-center">
+            <Button variant="ghost" size="icon">
                 <Palette className="h-[1.2rem] w-[1.2rem]" />
-                <span className="ml-2 md:hidden">Theme</span>
+                <span className="sr-only">Toggle theme</span>
             </Button>
         )
     }
@@ -77,9 +77,9 @@ export function ThemeCustomizer({ initialColor = "orange", initialTheme }: Theme
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" id="theme-trigger" className="w-full justify-start md:justify-center">
+                <Button variant="ghost" size="icon" id="theme-trigger">
                     <Palette className="h-[1.2rem] w-[1.2rem]" />
-                    <span className="ml-2 md:hidden">Theme</span>
+                    <span className="sr-only">Toggle theme</span>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
