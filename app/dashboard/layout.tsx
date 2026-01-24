@@ -8,6 +8,8 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Footer } from "@/components/footer";
 import { Suspense } from "react";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { SessionTimeoutProvider } from "@/components/auth/session-timeout-provider";
+import { AuthProvider } from "@/components/auth/auth-provider";
 
 export default async function Layout({ children }: { children: React.ReactNode }) {
     // Check auth
@@ -18,8 +20,9 @@ export default async function Layout({ children }: { children: React.ReactNode }
     // If settings are missing, the system is broken, so everyone should wait?
     // But only Admin can fix it.
 
+    const settings = await prisma.troopSettings.findFirst()
+
     if (session?.user?.role === 'ADMIN') {
-        const settings = await prisma.troopSettings.findFirst()
 
         // If settings are missing, redirect to onboarding.
         // But we must NOT redirect if we are already on the onboarding page.
@@ -94,31 +97,35 @@ export default async function Layout({ children }: { children: React.ReactNode }
     }
 
     return (
-        <div className="flex h-screen flex-col md:flex-row md:overflow-hidden">
-            <div className="hidden md:block w-64 flex-none">
-                <SideNav
-                    role={role}
-                    permissions={userPermissions}
-                    scoutId={scoutId}
-                />
-            </div>
-            <div className="flex-grow flex flex-col md:overflow-y-auto bg-gray-50/50 dark:bg-background">
-                {/* Static Header */}
-                <DashboardHeader
-                    user={session?.user || {}}
-                    initialColor={initialColor}
-                    initialTheme={initialTheme}
-                    role={role}
-                    permissions={userPermissions}
-                    scoutId={scoutId}
-                />
+        <AuthProvider session={session}>
+            <SessionTimeoutProvider timeoutMinutes={settings?.sessionTimeoutMinutes || 15}>
+                <div className="flex h-screen flex-col md:flex-row md:overflow-hidden">
+                    <div className="hidden md:block w-64 flex-none">
+                        <SideNav
+                            role={role}
+                            permissions={userPermissions}
+                            scoutId={scoutId}
+                        />
+                    </div>
+                    <div className="flex-grow flex flex-col md:overflow-y-auto bg-gray-50/50 dark:bg-background">
+                        {/* Static Header */}
+                        <DashboardHeader
+                            user={session?.user || {}}
+                            initialColor={initialColor}
+                            initialTheme={initialTheme}
+                            role={role}
+                            permissions={userPermissions}
+                            scoutId={scoutId}
+                        />
 
-                <div className="flex-grow p-6 md:p-12 pt-6">
-                    <Breadcrumbs />
-                    {children}
+                        <div className="flex-grow p-6 md:p-12 pt-6">
+                            <Breadcrumbs />
+                            {children}
+                        </div>
+                        <Footer />
+                    </div>
                 </div>
-                <Footer />
-            </div>
-        </div>
+            </SessionTimeoutProvider>
+        </AuthProvider>
     );
 }
