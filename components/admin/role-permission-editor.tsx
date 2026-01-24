@@ -19,7 +19,8 @@ const ALL_PERMISSIONS: Permission[] = [
     "VIEW_SETTINGS",
     "MANAGE_SCOUTS",
     "MANAGE_FINANCE",
-    "MANAGE_USERS"
+    "MANAGE_USERS",
+    "VIEW_FUNDRAISING"
 ]
 
 const ALL_ROLES: Role[] = ["FINANCIER", "LEADER", "PARENT", "SCOUT" /* Admin is always full access */]

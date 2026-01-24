@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { clearAllData } from "@/app/actions"
+import { factoryResetData } from "@/app/actions/admin"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -21,13 +21,13 @@ export function ResetDatabaseCard() {
         if (confirmText !== "DELETE") return
 
         startTransition(async () => {
-            const result = await clearAllData()
-            if (result.error) {
-                toast.error(result.error)
-            } else {
-                toast.success(result.message)
+            try {
+                await factoryResetData()
+                toast.success("Factory reset complete")
                 setOpen(false)
-                router.refresh()
+                setConfirmText("")
+            } catch (error: any) {
+                toast.error(error.message || "Failed to reset data")
             }
         })
     }

@@ -400,13 +400,120 @@ export async function toggleFundraisingStatus(id: string) {
             ? FundraisingStatus.CLOSED
             : FundraisingStatus.ACTIVE
 
+        // Enhanced Logic for Product Sales Automation
+        if (campaign.type === 'PRODUCT_SALE') {
+            await prisma.$transaction(async (tx) => {
+                // 1. CLEANUP / REVERSE LOGIC
+                // First, find any existing system-generated transactions for this campaign to reverse effects
+                const existingTxs = await tx.transaction.findMany({
+                    where: { fundraisingCampaignId: id }
+                })
+
+                for (const txRec of existingTxs) {
+                    // If it was a scout allocation (Income for scout), debit the balance back
+                    if (txRec.type === 'FUNDRAISING_INCOME' && txRec.scoutId) {
+                        await tx.scout.update({
+                            where: { id: txRec.scoutId },
+                            data: { ibaBalance: { decrement: txRec.amount } }
+                        })
+                    }
+                }
+
+                // Delete the transactions
+                if (existingTxs.length > 0) {
+                    await tx.transaction.deleteMany({
+                        where: { fundraisingCampaignId: id }
+                    })
+                }
+
+                // 2. DISTRIBUTION LOGIC (Only if Closing)
+                if (newStatus === FundraisingStatus.CLOSED) {
+                    const sales = await tx.fundraisingSale.findMany({
+                        where: { campaignId: id }
+                    })
+
+                    let totalCollected = new Decimal(0)
+                    let totalScoutShare = new Decimal(0)
+
+                    const price = campaign.productPrice || new Decimal(0)
+                    const ibaPerItem = campaign.productIba || new Decimal(0)
+
+                    for (const sale of sales) {
+                        const qty = new Decimal(sale.quantity)
+                        if (qty.equals(0)) continue
+
+                        const collected = qty.mul(price)
+                        const share = qty.mul(ibaPerItem)
+
+                        totalCollected = totalCollected.plus(collected)
+                        totalScoutShare = totalScoutShare.plus(share)
+
+                        // Scout Allocation Transaction
+                        if (share.greaterThan(0)) {
+                            await tx.transaction.create({
+                                data: {
+                                    type: 'FUNDRAISING_INCOME',
+                                    amount: share,
+                                    description: `${campaign.name} - Scout Share`,
+                                    fundraisingCampaignId: id,
+                                    scoutId: sale.scoutId,
+                                    approvedBy: session.user.id,
+                                    status: 'APPROVED',
+                                    userId: session.user.id,
+                                    createdAt: new Date()
+                                }
+                            })
+
+                            // Increment Scout Balance
+                            await tx.scout.update({
+                                where: { id: sale.scoutId },
+                                data: { ibaBalance: { increment: share } }
+                            })
+                        }
+                    }
+
+                    // Troop Total Income Record
+                    if (totalCollected.greaterThan(0)) {
+                        await tx.transaction.create({
+                            data: {
+                                type: 'FUNDRAISING_INCOME',
+                                amount: totalCollected,
+                                description: `${campaign.name} - Total Sales Collection`,
+                                fundraisingCampaignId: id,
+                                approvedBy: session.user.id,
+                                status: 'APPROVED',
+                                userId: session.user.id,
+                                createdAt: new Date()
+                            }
+                        })
+                    }
+
+                    // Troop Distribution Expense Record
+                    if (totalScoutShare.greaterThan(0)) {
+                        await tx.transaction.create({
+                            data: {
+                                type: 'EXPENSE',
+                                amount: totalScoutShare,
+                                description: `${campaign.name} - Distribution to Scouts`,
+                                fundraisingCampaignId: id,
+                                approvedBy: session.user.id,
+                                status: 'APPROVED',
+                                userId: session.user.id,
+                                createdAt: new Date()
+                            }
+                        })
+                    }
+                }
+            })
+        }
+
         await prisma.fundraisingCampaign.update({
             where: { id },
             data: { status: newStatus }
         })
 
         revalidatePath("/dashboard/finance/fundraising")
-        return { success: true, message: `Campaign ${newStatus === FundraisingStatus.ACTIVE ? 'activated' : 'closed'}` }
+        return { success: true, message: `Campaign ${newStatus === FundraisingStatus.ACTIVE ? 're-opened (distribution reversed)' : 'closed and funds distributed'}` }
     } catch (error) {
         console.error("Toggle Campaign Status Error:", error)
         return { error: "Failed to update campaign status" }
