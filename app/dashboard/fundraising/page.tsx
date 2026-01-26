@@ -1,7 +1,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { FundraisingForm } from "@/components/fundraising/fundraising-form"
+import { FundraisingDashboard } from "@/components/fundraising/fundraising-dashboard"
 
 export default async function FundraisingPage() {
     const session = await auth()
@@ -9,20 +9,30 @@ export default async function FundraisingPage() {
         redirect("/dashboard")
     }
 
-    const scouts = await prisma.scout.findMany({
-        orderBy: { name: 'asc' },
-        where: { status: 'ACTIVE' },
-        select: { id: true, name: true }
+    const campaigns = await prisma.fundraisingCampaign.findMany({
+        orderBy: { startDate: 'desc' }
+        // Fetch all campaigns (Active, Draft, Closed) - they will be grouped in the UI
     })
 
+    // Transform Decimal to number for the client component
+    const mappedCampaigns = campaigns.map(c => ({
+        id: c.id,
+        name: c.name,
+        type: c.type,
+        status: c.status,
+        goal: c.goal.toNumber(),
+        startDate: c.startDate,
+        endDate: c.endDate
+    }))
+
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-6xl mx-auto space-y-6">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold">Fundraising Distribution</h1>
-                <p className="text-gray-500">Record a campaign and allocate shares to scouts or external expenses.</p>
+                <h1 className="text-3xl font-bold">Fundraising Management</h1>
+                <p className="text-gray-500">Manage campaigns, track sales, and distribute funds.</p>
             </div>
 
-            <FundraisingForm scouts={scouts} />
+            <FundraisingDashboard campaigns={mappedCampaigns} />
         </div>
     )
 }

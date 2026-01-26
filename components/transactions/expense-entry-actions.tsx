@@ -12,6 +12,17 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Pencil, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -31,8 +42,6 @@ export function ExpenseEntryActions({ id, type, initialDescription, initialAmoun
     if (!canEdit) return null
 
     const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this entry?")) return
-
         let result
         if (type === "TRANSACTION") {
             result = await deleteTransaction(id)
@@ -103,9 +112,25 @@ export function ExpenseEntryActions({ id, type, initialDescription, initialAmoun
                 </DialogContent>
             </Dialog>
 
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-red-600" onClick={handleDelete}>
-                <Trash2 className="w-4 h-4" />
-            </Button>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-red-600">
+                        <Trash2 className="w-4 h-4" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Entry?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete this expense entry? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

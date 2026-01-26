@@ -2,6 +2,7 @@
 
 import { approveAdultExpense } from "@/app/actions"
 import { Button } from "@/components/ui/button"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { formatCurrency } from "@/lib/utils"
 import { Check } from "lucide-react"
 import { ExpenseEntryActions } from "@/components/transactions/expense-entry-actions"
@@ -11,7 +12,6 @@ export function PendingReimbursements({ expenses, isReadOnly = false }: { expens
     if (expenses.length === 0) return null
 
     const handleApprove = async (id: string) => {
-        if (!confirm("Approve this reimbursement?")) return
         const result = await approveAdultExpense(id)
         if (result.error) {
             toast.error(result.error)
@@ -39,9 +39,25 @@ export function PendingReimbursements({ expenses, isReadOnly = false }: { expens
                                         initialDescription={expense.description}
                                         initialAmount={Number(expense.amount)}
                                     />
-                                    <Button size="sm" variant="ghost" onClick={() => handleApprove(expense.id)} title="Approve">
-                                        <Check className="w-4 h-4 text-green-600" />
-                                    </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button size="sm" variant="ghost" title="Approve">
+                                                <Check className="w-4 h-4 text-green-600" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Approve Reimbursement?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Approve {formatCurrency(Number(expense.amount))} reimbursement for "{expense.description}"?
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleApprove(expense.id)}>Approve</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </>
                             )}
                         </div>

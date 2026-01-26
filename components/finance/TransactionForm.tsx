@@ -88,7 +88,11 @@ export function TransactionForm({ triggerButton, scouts, campouts, categories, c
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="type">Type</Label>
-                            <Select onValueChange={(val: any) => setValue("type", val)} defaultValue="EXPENSE">
+                            <Select
+                                onValueChange={(val: any) => setValue("type", val)}
+                                value={type}
+                                defaultValue="EXPENSE"
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select type" />
                                 </SelectTrigger>

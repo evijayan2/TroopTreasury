@@ -40,12 +40,13 @@ export default async function FinancePage() {
             case 'CAMP_TRANSFER':
             case 'IBA_RECLAIM':
                 troopIncome += val
-                troopList.push({ description: t.description || "No Description", amount: val, date: dateStr })
-                incomeList.push({ description: t.description || "No Description", amount: val, date: dateStr })
+                troopList.push({ id: t.id, description: t.description || "No Description", amount: val, date: dateStr })
+                incomeList.push({ id: t.id, description: t.description || "No Description", amount: val, date: dateStr })
                 break
             case 'EVENT_PAYMENT':
+            case 'SCOUT_CASH_TURN_IN':
                 organizerCashTotal += val
-                organizerCashList.push({ description: t.description || "Organizer Collected Cash", amount: val, date: dateStr })
+                organizerCashList.push({ id: t.id, description: t.description || (t.type === 'SCOUT_CASH_TURN_IN' ? "Scout Cash Turn-in" : "Organizer Collected Cash"), amount: val, date: dateStr })
                 break
             case 'FUNDRAISING_INCOME':
                 const ibaPercent = t.fundraisingCampaign?.ibaPercentage || 0
@@ -55,25 +56,25 @@ export default async function FinancePage() {
                     const troopPortion = val - scoutPortion
                     troopIncome += troopPortion
                     scoutFundraisingShare += scoutPortion
-                    troopList.push({ description: `${t.description} (Troop Share)`, amount: troopPortion, date: dateStr })
-                    incomeList.push({ description: `${t.description} (Troop Share)`, amount: troopPortion, date: dateStr })
-                    reserveList.push({ description: `${t.description} (Scout Share)`, amount: scoutPortion, date: dateStr })
+                    troopList.push({ id: t.id, description: `${t.description} (Troop Share)`, amount: troopPortion, date: dateStr })
+                    incomeList.push({ id: t.id, description: `${t.description} (Troop Share)`, amount: troopPortion, date: dateStr })
+                    reserveList.push({ id: t.id, description: `${t.description} (Scout Share)`, amount: scoutPortion, date: dateStr })
                 } else {
                     troopIncome += val
-                    troopList.push({ description: `${t.description} (Active Sale - 100% to Troop)`, amount: val, date: dateStr })
-                    incomeList.push({ description: `${t.description} (Active Sale - 100% to Troop)`, amount: val, date: dateStr })
+                    troopList.push({ id: t.id, description: `${t.description} (Active Sale - 100% to Troop)`, amount: val, date: dateStr })
+                    incomeList.push({ id: t.id, description: `${t.description} (Active Sale - 100% to Troop)`, amount: val, date: dateStr })
                 }
                 break
             case 'EXPENSE':
             case 'REIMBURSEMENT':
             case 'TROOP_PAYMENT':
                 troopExpenses += val
-                troopList.push({ description: t.description || "No Description", amount: -val, date: dateStr })
-                expenseList.push({ description: t.description || "No Description", amount: val, date: dateStr })
+                troopList.push({ id: t.id, description: t.description || "No Description", amount: -val, date: dateStr })
+                expenseList.push({ id: t.id, description: t.description || "No Description", amount: val, date: dateStr })
                 break
             case 'IBA_DEPOSIT':
                 ibaDepositsTotal += val
-                reserveList.push({ description: `${t.description}`, amount: val, date: dateStr })
+                reserveList.push({ id: t.id, description: `${t.description}`, amount: val, date: dateStr })
                 break
             default:
                 break
@@ -226,7 +227,7 @@ export default async function FinancePage() {
                         </div>
                         <div className="bg-background p-3 rounded border">
                             <p className="font-bold mb-1">Step 2</p>
-                            <p className="text-muted-foreground">Use the <b>Fundraising</b> tab to manage popcorn sales or other events.</p>
+                            <p className="text-muted-foreground">Use the <b>Fundraising</b> menu in the sidebar to manage popcorn sales or other events.</p>
                         </div>
                         <div className="bg-background p-3 rounded border">
                             <p className="font-bold mb-1">Step 3</p>

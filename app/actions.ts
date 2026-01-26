@@ -323,21 +323,47 @@ export async function createTransaction(prevState: any, formData: FormData) {
     const { amount, type, description: desc, date: txDate, scoutId: validatedScoutId, campoutId } = validatedFields.data
 
     try {
-        await prisma.transaction.create({
-            data: {
-                amount: new Decimal(amount),
-                type,
-                description: desc,
-                createdAt: new Date(txDate),
-                scoutId: validatedScoutId || null,
-                campoutId: campoutId || null,
-                approvedBy: ["ADMIN", "FINANCIER"].includes(session.user.role) ? session.user.id : null,
-                status: ["ADMIN", "FINANCIER"].includes(session.user.role) ? "APPROVED" : "PENDING",
+        await prisma.$transaction(async (tx) => {
+            await tx.transaction.create({
+                data: {
+                    amount: new Decimal(amount),
+                    type,
+                    description: desc,
+                    createdAt: new Date(txDate),
+                    scoutId: validatedScoutId || null,
+                    campoutId: campoutId || null,
+                    approvedBy: ["ADMIN", "FINANCIER"].includes(session.user.role) ? session.user.id : null,
+                    status: ["ADMIN", "FINANCIER"].includes(session.user.role) ? "APPROVED" : "PENDING",
+                }
+            })
+
+            // Update Scout Balance if applicable
+            if (validatedScoutId && ["ADMIN", "FINANCIER"].includes(session.user.role)) {
+                const decimalAmount = new Decimal(amount)
+
+                // Credit Types
+                if (["IBA_DEPOSIT", "FUNDRAISING_INCOME", "SCOUT_CASH_TURN_IN"].includes(type)) {
+                    await tx.scout.update({
+                        where: { id: validatedScoutId },
+                        data: { ibaBalance: { increment: decimalAmount } }
+                    })
+                }
+                // Debit Types
+                else if (["DUES", "CAMP_TRANSFER"].includes(type)) {
+                    // Check balance for Debit? Or allow negative for manual correction? 
+                    // Allowing negative for manual correction by Admin/Financier.
+                    await tx.scout.update({
+                        where: { id: validatedScoutId },
+                        data: { ibaBalance: { decrement: decimalAmount } }
+                    })
+                }
             }
         })
 
         revalidatePath("/dashboard")
         revalidatePath("/dashboard/transactions")
+        if (validatedScoutId) revalidatePath(`/dashboard/scouts/${validatedScoutId}`)
+
         return { success: true, message: "Transaction recorded" }
     } catch (error) {
         console.error("Transaction Create Error:", error)

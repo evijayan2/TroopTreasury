@@ -8,19 +8,31 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { addOrder, deleteOrder, toggleOrderDelivered } from "@/app/actions/finance"
 import { toast } from "sonner"
-import { Trash2 } from "lucide-react"
+import { Trash2, Package } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 type SerializedCampaign = Omit<FundraisingCampaign, 'goal' | 'productPrice' | 'productCost' | 'productIba'> & {
     goal: string
     productPrice: string | null
     productCost: string | null
     productIba: string | null
+    products: Array<{
+        id: string
+        name: string
+        price: string
+        cost: string | null
+        ibaAmount: string | null
+    }>
 }
 
 type SerializedOrder = Omit<FundraisingOrder, 'amountPaid'> & {
     amountPaid: string
+    product?: {
+        name: string
+    } | null
 }
 
 type Props = {
@@ -34,6 +46,8 @@ export function OrderManager({ campaign, orders, scoutId }: Props) {
 
     // Form State
     const [customerName, setCustomerName] = useState("")
+    const [customerEmail, setCustomerEmail] = useState("")
+    const [productId, setProductId] = useState<string>(campaign.products?.[0]?.id || "")
     const [quantity, setQuantity] = useState("1")
     const [amountPaid, setAmountPaid] = useState("0")
     const [delivered, setDelivered] = useState(false)
@@ -45,7 +59,19 @@ export function OrderManager({ campaign, orders, scoutId }: Props) {
         // Auto-calc amount paid as full amount by default for convenience
         const numQty = parseInt(qty)
         if (!isNaN(numQty)) {
-            setAmountPaid((numQty * Number(campaign.productPrice)).toFixed(2))
+            const product = campaign.products.find(p => p.id === productId)
+            const price = product ? Number(product.price) : Number(campaign.productPrice)
+            setAmountPaid((numQty * price).toFixed(2))
+        }
+    }
+
+    const handleProductChange = (val: string) => {
+        setProductId(val)
+        const numQty = parseInt(quantity)
+        if (!isNaN(numQty)) {
+            const product = campaign.products.find(p => p.id === val)
+            const price = product ? Number(product.price) : Number(campaign.productPrice)
+            setAmountPaid((numQty * price).toFixed(2))
         }
     }
 
@@ -56,6 +82,8 @@ export function OrderManager({ campaign, orders, scoutId }: Props) {
         const formData = new FormData()
         formData.append("campaignId", campaign.id)
         formData.append("customerName", customerName)
+        formData.append("customerEmail", customerEmail)
+        if (productId) formData.append("productId", productId)
         formData.append("quantity", quantity)
         formData.append("amountPaid", amountPaid)
         if (delivered) formData.append("delivered", "on")
@@ -68,6 +96,7 @@ export function OrderManager({ campaign, orders, scoutId }: Props) {
         } else {
             toast.success("Order added")
             setCustomerName("")
+            setCustomerEmail("")
             setQuantity("1")
             setAmountPaid("0")
             setDelivered(false)
@@ -76,7 +105,6 @@ export function OrderManager({ campaign, orders, scoutId }: Props) {
     }
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure?")) return
         const result = await deleteOrder(id, campaign.id)
         if (result.error) toast.error(result.error)
         else toast.success("Deleted")
@@ -128,6 +156,25 @@ export function OrderManager({ campaign, orders, scoutId }: Props) {
                                 <Label>Customer Name</Label>
                                 <Input required value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="e.g. John Doe" />
                             </div>
+                            <div>
+                                <Label>Customer Email</Label>
+                                <Input type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} placeholder="e.g. john@example.com" />
+                            </div>
+                            {campaign.products.length > 0 && (
+                                <div>
+                                    <Label>Product</Label>
+                                    <Select value={productId} onValueChange={handleProductChange}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select product" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {campaign.products.map(p => (
+                                                <SelectItem key={p.id} value={p.id}>{p.name} (${p.price})</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <Label>Quantity</Label>
@@ -158,6 +205,7 @@ export function OrderManager({ campaign, orders, scoutId }: Props) {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Customer</TableHead>
+                                    <TableHead>Product</TableHead>
                                     <TableHead>Qty</TableHead>
                                     <TableHead>Paid</TableHead>
                                     <TableHead>Delivered</TableHead>
@@ -167,7 +215,16 @@ export function OrderManager({ campaign, orders, scoutId }: Props) {
                             <TableBody>
                                 {orders.map(order => (
                                     <TableRow key={order.id}>
-                                        <TableCell className="font-medium">{order.customerName}</TableCell>
+                                        <TableCell className="font-medium">
+                                            <div>{order.customerName}</div>
+                                            {order.customerEmail && <div className="text-[10px] text-muted-foreground">{order.customerEmail}</div>}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-1.5">
+                                                <Package className="w-3 h-3 text-muted-foreground" />
+                                                <span className="text-sm">{order.product?.name || "Standard"}</span>
+                                            </div>
+                                        </TableCell>
                                         <TableCell>{order.quantity}</TableCell>
                                         <TableCell>${Number(order.amountPaid).toFixed(2)}</TableCell>
                                         <TableCell>
@@ -177,9 +234,25 @@ export function OrderManager({ campaign, orders, scoutId }: Props) {
                                             />
                                         </TableCell>
                                         <TableCell>
-                                            <Button variant="ghost" size="icon" onClick={() => handleDelete(order.id)}>
-                                                <Trash2 className="h-4 w-4 text-red-500" />
-                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="ghost" size="icon">
+                                                        <Trash2 className="h-4 w-4 text-red-500" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Delete Order?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Are you sure you want to delete this order for {order.customerName}?
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDelete(order.id)}>Delete</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </TableCell>
                                     </TableRow>
                                 ))}

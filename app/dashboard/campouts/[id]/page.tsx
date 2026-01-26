@@ -14,9 +14,10 @@ import { FinancialReport } from "@/components/campouts/financial-report"
 import { RoleSwitcher } from "@/components/campouts/role-switcher"
 import { RemoveParticipantButton } from "@/components/campouts/remove-participant-button"
 import { FinalizeCampoutButton } from "@/components/campouts/finalize-button"
-import { Button } from "@/components/ui/button"
 import { PayCashButton } from "@/components/campouts/pay-cash-button"
 import { PayoutControls } from "@/components/campouts/payout-controls"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
     // ... existing setup
@@ -255,20 +256,20 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     const canViewRoster = ["ADMIN", "FINANCIER", "LEADER"].includes(role) || isOrganizer
 
     return (
-        <div className="space-y-6">
+        <div className="max-w-6xl mx-auto space-y-6">
             {/* ... Header ... */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold">{campout.name}</h1>
-                    <div className="flex items-center gap-4 text-gray-500 mt-2">
+                    <h1 className="text-3xl font-bold tracking-tight">{campout.name}</h1>
+                    <div className="flex items-center gap-4 text-muted-foreground mt-2">
                         <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {campout.location}</span>
                         <span className="flex items-center gap-1"><CalendarDays className="w-4 h-4" /> {new Date(campout.startDate).toLocaleDateString()} - {campout.endDate ? new Date(campout.endDate).toLocaleDateString() : 'TBD'}</span>
-                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${campout.status === 'OPEN' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                            campout.status === 'READY_FOR_PAYMENT' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-                            }`}>
+                        <Badge variant={
+                            campout.status === 'OPEN' ? 'default' :
+                                campout.status === 'READY_FOR_PAYMENT' ? 'secondary' : 'outline'
+                        }>
                             {campout.status.replace(/_/g, " ")}
-                        </span>
+                        </Badge>
                     </div>
                 </div>
                 <div className="text-right">
@@ -411,22 +412,23 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <div className="grid gap-6 md:grid-cols-2">
                 {/* ... Financials Column ... */}
                 {canViewFinances && (
-                    <div className="space-y-6">
-                        <div className="p-6 bg-white dark:bg-card dark:text-card-foreground rounded-lg border shadow-sm space-y-4">
-                            <div className="flex justify-between items-center">
-                                <h2 className="text-xl font-semibold">Financials</h2>
-                                {!isClosed && campout.status === 'OPEN' && (
-                                    <ExpenseLogger
-                                        campoutId={campout.id}
-                                        adults={campout.adults}
-                                        allAdults={allAdults}
-                                        currentUserId={session?.user?.id}
-                                        userRole={role}
-                                    />
-                                )}
+                    <Card className="h-full">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                            <div>
+                                <CardTitle className="text-xl font-bold">Financials</CardTitle>
+                                <p className="text-sm text-muted-foreground mt-1">Total Exp: {formatCurrency(totalCampoutCost)}</p>
                             </div>
-                            <p className="text-sm text-gray-500">Total Exp: {formatCurrency(totalCampoutCost)}</p>
-
+                            {!isClosed && campout.status === 'OPEN' && (
+                                <ExpenseLogger
+                                    campoutId={campout.id}
+                                    adults={campout.adults}
+                                    allAdults={allAdults}
+                                    currentUserId={session?.user?.id}
+                                    userRole={role}
+                                />
+                            )}
+                        </CardHeader>
+                        <CardContent className="space-y-4">
                             {canApprove && serializedPendingExpenses.length > 0 && (
                                 <PendingReimbursements
                                     expenses={serializedPendingExpenses}
@@ -440,189 +442,195 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                                     isReadOnly={campout.status !== 'OPEN'}
                                 />
                             ) : (
-                                <p className="text-gray-500 text-sm">No expenses recorded.</p>
+                                <p className="text-muted-foreground text-sm">No expenses recorded.</p>
                             )}
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
                 )}
                 {/* ... Roster Column ... */}
                 {canViewRoster && (
                     <div className="space-y-6">
-                        <div className="p-6 bg-white dark:bg-card dark:text-card-foreground rounded-lg border shadow-sm">
-                            <CampoutRoster
-                                campoutId={campout.id}
-                                registeredScouts={campout.scouts.map((cs: any) => {
-                                    const paidAmount = campout.transactions
-                                        .filter((t: any) =>
-                                            (["CAMP_TRANSFER", "EVENT_PAYMENT"].includes(t.type) || t.type.startsWith("TROOP")) &&
-                                            t.scoutId === cs.scout.id &&
-                                            t.status === "APPROVED"
-                                        )
-                                        .reduce((sum: number, t: any) => sum + Number(t.amount), 0)
-                                    const isPaid = paidAmount >= costPerPerson
-                                    const remainingDue = Math.max(0, costPerPerson - paidAmount)
-                                    return {
-                                        ...cs,
-                                        scout: { ...cs.scout, ibaBalance: Number(cs.scout.ibaBalance) },
-                                        isPaid,
-                                        remainingDue
-                                    }
-                                })}
-                                allScouts={allScouts.map(s => ({ ...s, ibaBalance: Number(s.ibaBalance) }))}
-                                canEdit={["ADMIN", "LEADER", "FINANCIER"].includes(role) && !isClosed}
-                                costPerPerson={costPerPerson}
-                                campoutStatus={campout.status}
-                            />
-                        </div>
+                        <Card>
+                            <CardContent className="pt-6">
+                                <CampoutRoster
+                                    campoutId={campout.id}
+                                    registeredScouts={campout.scouts.map((cs: any) => {
+                                        const paidAmount = campout.transactions
+                                            .filter((t: any) =>
+                                                (["CAMP_TRANSFER", "EVENT_PAYMENT"].includes(t.type) || t.type.startsWith("TROOP")) &&
+                                                t.scoutId === cs.scout.id &&
+                                                t.status === "APPROVED"
+                                            )
+                                            .reduce((sum: number, t: any) => sum + Number(t.amount), 0)
+                                        const isPaid = paidAmount >= costPerPerson
+                                        const remainingDue = Math.max(0, costPerPerson - paidAmount)
+                                        return {
+                                            ...cs,
+                                            scout: { ...cs.scout, ibaBalance: Number(cs.scout.ibaBalance) },
+                                            isPaid,
+                                            remainingDue
+                                        }
+                                    })}
+                                    allScouts={allScouts.map(s => ({ ...s, ibaBalance: Number(s.ibaBalance) }))}
+                                    canEdit={["ADMIN", "LEADER", "FINANCIER"].includes(role) && !isClosed}
+                                    costPerPerson={costPerPerson}
+                                    campoutStatus={campout.status}
+                                />
+                            </CardContent>
+                        </Card>
 
-                        <div className="p-6 bg-white dark:bg-card dark:text-card-foreground rounded-lg border shadow-sm space-y-4">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-semibold">Adults</h3>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-lg font-bold">Adults</CardTitle>
                                 {!isClosed && campout.status === 'OPEN' && (
                                     <CampoutAdults
                                         campoutId={campout.id}
-                                        adults={campout.adults} // Passing all adults, component needs update to handle roles or we just list them here.
+                                        adults={campout.adults}
                                         allAdults={allAdults}
                                     />
                                 )}
-                            </div>
-
-                            {/* Custom Rendering for Roles Display if CampoutAdults doesn't do it */}
-                            <div className="bg-white dark:bg-card dark:text-card-foreground p-6 rounded-lg shadow">
-                                <h2 className="text-xl font-semibold mb-4">Organizers</h2>
-                                <ul className="space-y-2">
-                                    {organizers.map(o => {
-                                        const isMe = o.adultId === session?.user?.id
-                                        const canEdit = ["ADMIN", "LEADER", "FINANCIER"].includes(role) && !isClosed
-                                        return (
-                                            <li key={o.adult.id} className="flex justify-between items-center bg-gray-50 dark:bg-muted p-3 rounded">
-                                                <div className="flex flex-col">
-                                                    <span>{o.adult.name}</span>
-                                                </div>
-                                                {canEdit && campout.status === 'OPEN' && (
-                                                    <RemoveParticipantButton campoutId={campout.id} id={o.adult.id} type="ADULT" />
-                                                )}
-                                            </li>
-                                        )
-                                    })}
-                                    {organizers.length === 0 && <li className="text-gray-400 text-sm italic">None</li>}
-                                </ul>
-                            </div>
-
-                            <div className="bg-white dark:bg-card p-6 rounded-lg shadow mt-6">
-                                <h2 className="text-xl font-semibold mb-4">Attendees ({attendees.length})</h2>
-                                <ul className="space-y-2">
-                                    {attendees.map((a: any) => {
-                                        // Check payment status for this adult
-                                        const paidAmount = campout.transactions
-                                            .filter((t: any) => t.userId === a.adultId && ["REGISTRATION_INCOME", "CAMP_TRANSFER", "EVENT_PAYMENT", "TROOP_PAYMENT"].includes(t.type) && t.status === "APPROVED")
-                                            .reduce((sum: number, t: any) => sum + Number(t.amount), 0)
-
-                                        const remainingDue = Math.max(0, costPerPerson - paidAmount)
-                                        const isPaid = paidAmount >= costPerPerson
-                                        const isMe = a.adultId === session?.user?.id
-
-                                        const canEdit = ["ADMIN", "LEADER", "FINANCIER"].includes(role) && !isClosed
-                                        return (
-                                            <li key={a.adult.id} className="flex justify-between items-center bg-gray-50 dark:bg-muted p-3 rounded">
-                                                <div className="flex items-center gap-2">
-                                                    <span>{a.adult.name}</span>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div>
+                                    <h4 className="text-sm font-semibold mb-3 text-muted-foreground">Organizers</h4>
+                                    <ul className="space-y-2">
+                                        {organizers.map(o => {
+                                            const canEdit = ["ADMIN", "LEADER", "FINANCIER"].includes(role) && !isClosed
+                                            return (
+                                                <li key={o.adult.id} className="flex justify-between items-center bg-muted/50 p-3 rounded-lg border">
+                                                    <span className="font-medium">{o.adult.name}</span>
                                                     {canEdit && campout.status === 'OPEN' && (
-                                                        <RemoveParticipantButton campoutId={campout.id} id={a.adult.id} type="ADULT" />
+                                                        <RemoveParticipantButton campoutId={campout.id} id={o.adult.id} type="ADULT" />
                                                     )}
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    {isPaid ? (
-                                                        <span className="px-2 py-0.5 bg-green-200 text-green-800 rounded text-xs font-bold">PAID</span>
-                                                    ) : (
-                                                        <>
-                                                            <span className="text-xs text-red-500 font-semibold">{formatCurrency(remainingDue)} Due</span>
-                                                            {/* Admin Record Payment (For Others) */}
-                                                            {!isMe && !isClosed && (role === "ADMIN" || role === "FINANCIER" || role === "LEADER") && campout.status !== 'OPEN' && (
-                                                                <>
-                                                                    {(() => {
-                                                                        const likedScouts = adultToScoutsMap.get(a.adult.id) || []
-                                                                        const serializedLikedScouts = likedScouts.map((s: any) => ({ ...s, ibaBalance: Number(s.ibaBalance) }))
-                                                                        if (serializedLikedScouts.length === 0) return null
-                                                                        return (
-                                                                            <IBAPayment
-                                                                                campoutId={campout.id}
-                                                                                linkedScouts={serializedLikedScouts}
-                                                                                defaultAmount={remainingDue}
-                                                                                beneficiaryId={a.adult.id}
-                                                                                label="Pay IBA"
-                                                                                className="w-auto h-7 px-2 text-xs"
-                                                                            />
-                                                                        )
-                                                                    })()}
-                                                                    <PaymentRecorder
-                                                                        campoutId={campout.id}
-                                                                        adultId={a.adult.id}
-                                                                        defaultAmount={remainingDue}
-                                                                        label="Record Pay"
-                                                                        className="h-7 px-2 text-xs"
-                                                                    />
-                                                                </>
-                                                            )}
+                                                </li>
+                                            )
+                                        })}
+                                        {organizers.length === 0 && <li className="text-muted-foreground text-sm italic py-2">No organizers listed.</li>}
+                                    </ul>
+                                </div>
 
-                                                            {/* Self Pay with IBA or Cash */}
-                                                            {isMe && campout.status === 'READY_FOR_PAYMENT' && !isClosed && (
-                                                                <div className="flex items-center gap-2">
-                                                                    {(() => {
-                                                                        const hasFunds = serializedLinkedScouts.some((s: any) => Number(s.ibaBalance) >= costPerPerson)
-                                                                        const isDisabled = serializedLinkedScouts.length === 0 || !hasFunds
-                                                                        return (
-                                                                            <IBAPayment
-                                                                                campoutId={campout.id}
-                                                                                linkedScouts={serializedLinkedScouts}
-                                                                                defaultAmount={costPerPerson}
-                                                                                beneficiaryId={a.adult.id}
-                                                                                disabled={isDisabled}
-                                                                                label="Pay with IBA"
-                                                                                className="h-7 px-2 text-xs"
-                                                                            />
-                                                                        )
-                                                                    })()}
+                                <div>
+                                    <h4 className="text-sm font-semibold mb-3 text-muted-foreground">Attendees ({attendees.length})</h4>
+                                    <ul className="space-y-2">
+                                        {attendees.map((a: any) => {
+                                            const paidAmount = campout.transactions
+                                                .filter((t: any) => t.userId === a.adultId && ["REGISTRATION_INCOME", "CAMP_TRANSFER", "EVENT_PAYMENT", "TROOP_PAYMENT"].includes(t.type) && t.status === "APPROVED")
+                                                .reduce((sum: number, t: any) => sum + Number(t.amount), 0)
 
-                                                                    {(role === "ADMIN" || role === "FINANCIER" || role === "LEADER") ? (
+                                            const remainingDue = Math.max(0, costPerPerson - paidAmount)
+                                            const isPaid = paidAmount >= costPerPerson
+                                            const isMe = a.adultId === session?.user?.id
+
+                                            const canEdit = ["ADMIN", "LEADER", "FINANCIER"].includes(role) && !isClosed
+                                            return (
+                                                <li key={a.adult.id} className="flex justify-between items-center bg-muted/50 p-3 rounded-lg border">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="font-medium">{a.adult.name}</span>
+                                                        {isPaid ? (
+                                                            <Badge variant="default" className="text-[10px] h-5">PAID</Badge>
+                                                        ) : (
+                                                            <span className="text-xs text-destructive font-bold">{formatCurrency(remainingDue)} Due</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        {canEdit && campout.status === 'OPEN' && (
+                                                            <RemoveParticipantButton campoutId={campout.id} id={a.adult.id} type="ADULT" />
+                                                        )}
+
+                                                        {!isPaid && (
+                                                            <>
+                                                                {/* Admin Record Payment (For Others) */}
+                                                                {!isMe && !isClosed && (role === "ADMIN" || role === "FINANCIER" || role === "LEADER") && campout.status !== 'OPEN' && (
+                                                                    <div className="flex items-center gap-1">
+                                                                        {(() => {
+                                                                            const likedScouts = adultToScoutsMap.get(a.adult.id) || []
+                                                                            const serializedLikedScouts = likedScouts.map((s: any) => ({ ...s, ibaBalance: Number(s.ibaBalance) }))
+                                                                            if (serializedLikedScouts.length === 0) return null
+                                                                            return (
+                                                                                <IBAPayment
+                                                                                    campoutId={campout.id}
+                                                                                    linkedScouts={serializedLikedScouts}
+                                                                                    defaultAmount={remainingDue}
+                                                                                    beneficiaryId={a.adult.id}
+                                                                                    label="IBA"
+                                                                                    className="h-7 px-2 text-[10px]"
+                                                                                />
+                                                                            )
+                                                                        })()}
                                                                         <PaymentRecorder
                                                                             campoutId={campout.id}
                                                                             adultId={a.adult.id}
                                                                             defaultAmount={remainingDue}
-                                                                            label="Pay Cash"
-                                                                            className="h-7 px-2 text-xs"
-                                                                            variant="outline"
+                                                                            label="Cash"
+                                                                            className="h-7 px-2 text-[10px]"
                                                                         />
-                                                                    ) : (
-                                                                        <PayCashButton message={`Please pay ${formatCurrency(remainingDue)} cash to the organizer.`} />
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </li>
-                                        )
-                                    })}
-                                    {attendees.length === 0 && <li className="text-gray-400 text-sm italic">None</li>}
-                                </ul>
-                            </div>
-                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Self Pay with IBA or Cash */}
+                                                                {isMe && campout.status === 'READY_FOR_PAYMENT' && !isClosed && (
+                                                                    <div className="flex items-center gap-2">
+                                                                        {(() => {
+                                                                            const hasFunds = serializedLinkedScouts.some((s: any) => Number(s.ibaBalance) >= costPerPerson)
+                                                                            const isDisabled = serializedLinkedScouts.length === 0 || !hasFunds
+                                                                            return (
+                                                                                <IBAPayment
+                                                                                    campoutId={campout.id}
+                                                                                    linkedScouts={serializedLinkedScouts}
+                                                                                    defaultAmount={costPerPerson}
+                                                                                    beneficiaryId={a.adult.id}
+                                                                                    disabled={isDisabled}
+                                                                                    label="Pay with IBA"
+                                                                                    className="h-7 px-2 text-xs"
+                                                                                />
+                                                                            )
+                                                                        })()}
+
+                                                                        {(role === "ADMIN" || role === "FINANCIER" || role === "LEADER") ? (
+                                                                            <PaymentRecorder
+                                                                                campoutId={campout.id}
+                                                                                adultId={a.adult.id}
+                                                                                defaultAmount={remainingDue}
+                                                                                label="Pay Cash"
+                                                                                className="h-7 px-2 text-xs"
+                                                                                variant="outline"
+                                                                            />
+                                                                        ) : (
+                                                                            <PayCashButton message={`Please pay ${formatCurrency(remainingDue)} cash to the organizer.`} />
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </li>
+                                            )
+                                        })}
+                                        {attendees.length === 0 && <li className="text-muted-foreground text-sm italic py-2">No adult attendees.</li>}
+                                    </ul>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                 )}
             </div>
             {/* Financial Report (Admin/Organizer Only) - Full Width at Bottom */}
             {canViewFinances && (
-                <div className="p-6 bg-white dark:bg-card dark:text-card-foreground rounded-lg border shadow-sm mt-6">
-                    <FinancialReport
-                        transactions={campout.transactions.map((t: any) => ({
-                            ...t,
-                            amount: Number(t.amount),
-                            scout: t.scout ? { ...t.scout, ibaBalance: Number(t.scout.ibaBalance) } : null
-                        }))}
-                        expenses={campout.expenses.map((e: any) => ({ ...e, amount: Number(e.amount) }))}
-                    />
-                </div>
+                <Card className="mt-6">
+                    <CardHeader>
+                        <CardTitle className="text-xl font-bold">Financial Report</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <FinancialReport
+                            transactions={campout.transactions.map((t: any) => ({
+                                ...t,
+                                amount: Number(t.amount),
+                                scout: t.scout ? { ...t.scout, ibaBalance: Number(t.scout.ibaBalance) } : null
+                            }))}
+                            expenses={campout.expenses.map((e: any) => ({ ...e, amount: Number(e.amount) }))}
+                        />
+                    </CardContent>
+                </Card>
             )}
         </div>
     )

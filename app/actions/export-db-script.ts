@@ -22,6 +22,10 @@ export async function generateReplayJson() {
   const allBudgets = await prisma.budget.findMany()
   const allBudgetCategories = await prisma.budgetCategory.findMany()
   const allFundraisingCampaigns = await prisma.fundraisingCampaign.findMany()
+  const allCampaignProducts = await prisma.campaignProduct.findMany()
+  const allFundraisingVolunteers = await prisma.fundraisingVolunteer.findMany()
+  const allFundraisingOrders = await prisma.fundraisingOrder.findMany()
+  const allFundraisingSales = await prisma.fundraisingSale.findMany()
   const troopSettings = await prisma.troopSettings.findFirst()
 
   // Filter out Admins
@@ -64,7 +68,11 @@ export async function generateReplayJson() {
     transactions: transactionsToExport,
     budgets: allBudgets,
     budgetCategories: allBudgetCategories,
-    fundraisingCampaigns: allFundraisingCampaigns
+    fundraisingCampaigns: allFundraisingCampaigns,
+    campaignProducts: allCampaignProducts,
+    fundraisingVolunteers: allFundraisingVolunteers,
+    fundraisingOrders: allFundraisingOrders,
+    fundraisingSales: allFundraisingSales
   }, null, 2)
 }
 
@@ -207,20 +215,131 @@ export async function restoreFromReplayJson(jsonString: string) {
     // 5d. FundraisingCampaigns
     if (data.fundraisingCampaigns) {
       for (const fc of data.fundraisingCampaigns) {
+        // Sanitize legacy fields that might exist in old exports
+        const { productName, productPrice, productCost, productIba, ...sanitizedFc } = fc as any
+
         await prisma.fundraisingCampaign.upsert({
           where: { id: fc.id },
           update: {
-            ...fc,
+            ...sanitizedFc,
             startDate: new Date(fc.startDate),
             endDate: fc.endDate ? new Date(fc.endDate) : null,
             goal: new Decimal(fc.goal),
+            ticketPrice: fc.ticketPrice ? new Decimal(fc.ticketPrice) : null,
+            volunteerPercentage: fc.volunteerPercentage ? new Decimal(fc.volunteerPercentage) : null,
           },
           create: {
-            ...fc,
+            ...sanitizedFc,
             startDate: new Date(fc.startDate),
             endDate: fc.endDate ? new Date(fc.endDate) : null,
             goal: new Decimal(fc.goal),
+            ticketPrice: fc.ticketPrice ? new Decimal(fc.ticketPrice) : null,
+            volunteerPercentage: fc.volunteerPercentage ? new Decimal(fc.volunteerPercentage) : null,
           }
+        })
+
+        // LEGACY MIGRATION: If old product fields were present, create a CampaignProduct
+        if (productName) {
+          await prisma.campaignProduct.upsert({
+            where: { id: `legacy-${fc.id}` }, // Deterministic ID for legacy product
+            update: {
+              name: productName,
+              price: new Decimal(productPrice || 0),
+              cost: new Decimal(productCost || 0),
+              ibaAmount: new Decimal(productIba || 0),
+            },
+            create: {
+              id: `legacy-${fc.id}`,
+              campaignId: fc.id,
+              name: productName,
+              price: new Decimal(productPrice || 0),
+              cost: new Decimal(productCost || 0),
+              ibaAmount: new Decimal(productIba || 0),
+            }
+          })
+        }
+      }
+    }
+
+    // 5e. CampaignProducts
+    if (data.campaignProducts) {
+      for (const cp of data.campaignProducts) {
+        await prisma.campaignProduct.upsert({
+          where: { id: cp.id },
+          update: {
+            ...cp,
+            price: new Decimal(cp.price),
+            cost: new Decimal(cp.cost),
+            ibaAmount: new Decimal(cp.ibaAmount),
+            createdAt: new Date(cp.createdAt),
+            updatedAt: new Date(cp.updatedAt),
+          },
+          create: {
+            ...cp,
+            price: new Decimal(cp.price),
+            cost: new Decimal(cp.cost),
+            ibaAmount: new Decimal(cp.ibaAmount),
+            createdAt: new Date(cp.createdAt),
+            updatedAt: new Date(cp.updatedAt),
+          }
+        })
+      }
+    }
+
+    // 5f. FundraisingVolunteers
+    if (data.fundraisingVolunteers) {
+      for (const fv of data.fundraisingVolunteers) {
+        await prisma.fundraisingVolunteer.upsert({
+          where: { campaignId_scoutId: { campaignId: fv.campaignId, scoutId: fv.scoutId } },
+          update: fv,
+          create: fv
+        })
+      }
+    }
+
+    // 5g. FundraisingOrders
+    if (data.fundraisingOrders) {
+      for (const order of data.fundraisingOrders) {
+        await prisma.fundraisingOrder.upsert({
+          where: { id: order.id },
+          update: {
+            ...order,
+            amountPaid: new Decimal(order.amountPaid),
+            createdAt: new Date(order.createdAt),
+            updatedAt: new Date(order.updatedAt),
+          },
+          create: {
+            ...order,
+            amountPaid: new Decimal(order.amountPaid),
+            createdAt: new Date(order.createdAt),
+            updatedAt: new Date(order.updatedAt),
+          }
+        })
+      }
+    }
+
+    // 5h. FundraisingSales
+    if (data.fundraisingSales) {
+      for (const sale of data.fundraisingSales) {
+        await prisma.fundraisingSale.upsert({
+          where: { campaignId_scoutId: { campaignId: sale.campaignId, scoutId: sale.scoutId } },
+          update: sale,
+          create: sale
+        })
+      }
+    }
+
+    // LEGACY MIGRATION: Update orders missing productId to point to legacy-id if it exists
+    const orphanOrders = await prisma.fundraisingOrder.findMany({
+      where: { productId: null }
+    })
+    for (const order of orphanOrders) {
+      const legacyProductId = `legacy-${order.campaignId}`
+      const legacyProduct = await prisma.campaignProduct.findUnique({ where: { id: legacyProductId } })
+      if (legacyProduct) {
+        await prisma.fundraisingOrder.update({
+          where: { id: order.id },
+          data: { productId: legacyProductId }
         })
       }
     }

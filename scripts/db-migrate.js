@@ -1,5 +1,15 @@
 const { execSync } = require('child_process');
 
+// Load environment variables for local development
+if (!process.env.VERCEL_ENV) {
+    try {
+        require('dotenv').config({ path: '.env.local' });
+        require('dotenv').config(); // Fallback to .env
+    } catch (e) {
+        console.log('Note: dotenv not loaded (not a dev dependency or not found)');
+    }
+}
+
 console.log('Starting custom database migration script...');
 console.log('VERCEL_ENV:', process.env.VERCEL_ENV);
 

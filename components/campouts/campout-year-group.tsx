@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronRight, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { CampoutList } from "./campout-list"
 import { cn } from "@/lib/utils"
 
@@ -17,29 +18,25 @@ export function CampoutYearGroup({ year, campouts, defaultOpen = false }: Campou
 
     return (
         <div className="space-y-4">
-            <div
-                className="flex items-center gap-2 cursor-pointer group select-none"
+            <button
                 onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center gap-2 w-full text-left hover:bg-muted/50 p-2 -ml-2 rounded-lg transition-colors"
             >
-                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
-                    {isOpen ? (
-                        <ChevronDown className="w-4 h-4 text-gray-600" />
-                    ) : (
-                        <ChevronRight className="w-4 h-4 text-gray-600" />
-                    )}
-                </div>
-                <h2 className="text-xl font-semibold text-gray-800">{year}</h2>
-                <div className="h-px flex-1 bg-gray-200" />
-            </div>
+                {isOpen ? (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                )}
+                <Calendar className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-xl font-semibold">{year}</h2>
+                <Badge variant="secondary" className="ml-2">{campouts.length}</Badge>
+            </button>
 
-            <div className={cn(
-                "grid transition-all duration-300 ease-in-out",
-                isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-            )}>
-                <div className="overflow-hidden">
+            {isOpen && (
+                <div className="pl-7">
                     <CampoutList campouts={campouts} />
                 </div>
-            </div>
+            )}
         </div>
     )
 }

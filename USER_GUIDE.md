@@ -89,12 +89,16 @@ Best for simple fundraisers like "Car Wash" or "Wreath Sales" where the profit i
 *   **Payout**: When a transaction is recorded, the system **immediately** credits 30% of that amount to the Scout's IBA.
 
 #### 2. Product Sale (Item Based)
-Best for selling physical items with fixed costs, like Popcorn or Candy Bars.
-*   **How it works**: You define a product (e.g., "Popcorn Box") with a **Price** (what user pays) and **Scout Profit** (amount to IBA).
-*   **Tracking**: Scouts track "Sales" (quantity of items sold).
-*   **Payout**: Unlike General campaigns, **no funds are added to the IBA during the campaign**.
-    *   Funds are distributed **ONLY when the mechanism is CLOSED**.
-    *   When an Admin clicks "Close Campaign", the system calculates the total sales for each scout and generates a bulk transaction to credit their IBAs.
+Best for selling physical items with specific costs, like Popcorn or Candy Bars.
+*   **Multi-Product Support**: You can now define **multiple products** for a single campaign (e.g., "Caramel Corn", "Cheese Tin", "Donation").
+*   **Pricing**: Each product has its own:
+    *   **Price**: What the customer pays.
+    *   **Cost**: What the troop pays the vendor.
+    *   **Scout Profit (IBA)**: Exact amount credited to the scout per item sold.
+*   **Tracking**: Scouts track "Orders" indicating which product and quantity was sold.
+*   **Payout**:
+    *   Funds are distributed **ONLY when the campaign is CLOSED**.
+    *   When an Admin clicks "Close Campaign", the system calculates the total sales for each scout (summing up profit from all different products) and generates a bulk transaction to credit their IBAs.
     *   *Warning*: Do not close the campaign until all sales are final!
 
 > **Screenshot Placeholder**: *[Image showing the Campaign Type selection toggle]*

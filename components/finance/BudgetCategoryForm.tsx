@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { useState } from "react"
 import { upsertBudgetCategory, deleteBudgetCategory } from "@/app/actions/finance"
 import { toast } from "sonner"
@@ -57,6 +58,15 @@ export function BudgetCategoryForm({ budgetId, category, triggerButton }: { budg
         }
     }
 
+    const handleDelete = async () => {
+        const res = await deleteBudgetCategory(category.id)
+        if (res.error) toast.error(res.error)
+        else {
+            toast.success("Category deleted")
+            setOpen(false)
+        }
+    }
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -100,22 +110,25 @@ export function BudgetCategoryForm({ budgetId, category, triggerButton }: { budg
 
                     <div className="flex justify-between pt-4">
                         {category?.id && (
-                            <Button
-                                type="button"
-                                variant="destructive"
-                                onClick={async () => {
-                                    if (confirm("Are you sure you want to delete this category?")) {
-                                        const res = await deleteBudgetCategory(category.id);
-                                        if (res.error) toast.error(res.error);
-                                        else {
-                                            toast.success("Category deleted");
-                                            setOpen(false);
-                                        }
-                                    }
-                                }}
-                            >
-                                <Trash2 className="w-4 h-4 mr-2" /> Delete
-                            </Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button type="button" variant="destructive">
+                                        <Trash2 className="w-4 h-4 mr-2" /> Delete
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete Category?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will permanently delete this budget category. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         )}
                         <Button type="submit">Save</Button>
                     </div>
@@ -124,3 +137,4 @@ export function BudgetCategoryForm({ budgetId, category, triggerButton }: { budg
         </Dialog>
     )
 }
+

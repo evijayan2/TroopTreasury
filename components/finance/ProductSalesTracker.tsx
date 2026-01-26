@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Scout, FundraisingCampaign, FundraisingSale } from "@prisma/client"
+import { Scout, FundraisingCampaign, FundraisingSale, CampaignProduct } from "@prisma/client"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,7 @@ import { recordProductSale } from "@/app/actions/finance"
 import { toast } from "sonner"
 
 type Props = {
-    campaign: FundraisingCampaign & { sales: FundraisingSale[] }
+    campaign: FundraisingCampaign & { sales: FundraisingSale[]; products: CampaignProduct[] }
     scouts: Scout[]
     initialSales: FundraisingSale[]
     liveOrderStats?: Record<string, number> // scoutId -> total quantity from orders
@@ -70,11 +70,14 @@ export function ProductSalesTracker({ campaign, scouts, initialSales, liveOrderS
         return true
     })
 
+    // Use first product for single-product sales tracker, or default to 0
+    const product = campaign.products?.[0]
+
     // Totals
     const totalItemsSold = Object.values(sales).reduce((a, b) => a + b, 0)
-    const totalCollected = totalItemsSold * Number(campaign.productPrice || 0)
-    const totalCost = totalItemsSold * Number(campaign.productCost || 0)
-    const totalScoutEarnings = totalItemsSold * Number(campaign.productIba || 0)
+    const totalCollected = totalItemsSold * Number(product?.price || 0)
+    const totalCost = totalItemsSold * Number(product?.cost || 0)
+    const totalScoutEarnings = totalItemsSold * Number(product?.ibaAmount || 0)
     const totalTroopEarnings = totalCollected - totalCost - totalScoutEarnings
 
     return (
@@ -85,8 +88,8 @@ export function ProductSalesTracker({ campaign, scouts, initialSales, liveOrderS
                         <CardTitle className="text-sm font-medium">Pricing</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">${Number(campaign.productPrice).toFixed(2)}</div>
-                        <p className="text-xs text-muted-foreground">Price per Item</p>
+                        <div className="text-2xl font-bold">${Number(product?.price || 0).toFixed(2)}</div>
+                        <p className="text-xs text-muted-foreground">{product?.name || "Item"}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -94,7 +97,7 @@ export function ProductSalesTracker({ campaign, scouts, initialSales, liveOrderS
                         <CardTitle className="text-sm font-medium">Profit</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-green-600">${Number(campaign.productIba).toFixed(2)}</div>
+                        <div className="text-2xl font-bold text-green-600">${Number(product?.ibaAmount || 0).toFixed(2)}</div>
                         <p className="text-xs text-muted-foreground">Scout Share per Item</p>
                     </CardContent>
                 </Card>
@@ -113,7 +116,7 @@ export function ProductSalesTracker({ campaign, scouts, initialSales, liveOrderS
                                 <span>Troop Fund:</span>
                                 <span className="text-blue-600 font-semibold">${totalTroopEarnings.toFixed(2)}</span>
                             </div>
-                            {Number(campaign.productCost) > 0 && (
+                            {Number(product?.cost || 0) > 0 && (
                                 <div className="flex justify-between text-gray-400">
                                     <span>Vendor Cost:</span>
                                     <span>${totalCost.toFixed(2)}</span>
@@ -157,8 +160,8 @@ export function ProductSalesTracker({ campaign, scouts, initialSales, liveOrderS
                         <TableBody>
                             {filteredScouts.map(scout => {
                                 const qty = sales[scout.id] || 0
-                                const collected = qty * Number(campaign.productPrice || 0)
-                                const earned = qty * Number(campaign.productIba || 0)
+                                const collected = qty * Number(product?.price || 0)
+                                const earned = qty * Number(product?.ibaAmount || 0)
                                 const hasActivity = qty > 0
 
                                 return (

@@ -54,7 +54,8 @@ export default async function ExpensesPage() {
             scout: true,
             user: true,
             budgetCategory: true,
-            fundraisingCampaign: true
+            fundraisingCampaign: true,
+            campout: true
         }
     })
 
@@ -109,35 +110,58 @@ export default async function ExpensesPage() {
                 <CardContent>
                     <div className="space-y-0">
                         {transactions.length === 0 && <p className="text-muted-foreground p-4 text-center">No transactions found</p>}
-                        {transactions.map(t => (
-                            <div key={t.id} className="flex flex-col md:flex-row justify-between items-start md:items-center py-4 border-b last:border-0 hover:bg-muted/30 px-2 rounded">
-                                <div className="space-y-1">
-                                    <div className="font-medium">{t.description}</div>
-                                    <div className="text-xs text-muted-foreground flex gap-2">
-                                        <span>{new Date(t.createdAt).toLocaleDateString()}</span>
-                                        <span>•</span>
-                                        <span>{t.type.replace(/_/g, " ")}</span>
-                                        {t.budgetCategory && <span>• {t.budgetCategory.name}</span>}
-                                        {t.scout && <span>• {t.scout.name}</span>}
-                                        {t.user && t.type === 'REIMBURSEMENT' && <span className="text-indigo-600 font-medium">• {t.user.name}</span>}
+                        {transactions.map(t => {
+                            // Smart Description Logic
+                            let displayDescription = t.description
+                            if (!displayDescription || displayDescription === "Donation In" || displayDescription === "Expense") {
+                                if (t.fundraisingCampaign) displayDescription = `${t.fundraisingCampaign.name} (${t.type.replace(/_/g, ' ').toLowerCase()})`
+                                else if (t.campout) displayDescription = `${t.campout.name} (${t.type.replace(/_/g, ' ').toLowerCase()})`
+                                else displayDescription = t.type.replace(/_/g, " ")
+                            }
+
+                            return (
+                                <div key={t.id} className="flex flex-col md:flex-row justify-between items-start md:items-center py-4 border-b last:border-0 hover:bg-muted/30 px-2 rounded">
+                                    <div className="space-y-1">
+                                        <div className="font-medium">{displayDescription}</div>
+                                        {t.description && t.description !== displayDescription && (
+                                            <div className="text-xs text-stone-500 italic">{t.description}</div>
+                                        )}
+                                        <div className="text-xs text-muted-foreground flex flex-wrap gap-2 items-center">
+                                            <span>{new Date(t.createdAt).toLocaleDateString()}</span>
+                                            <Badge variant="outline" className="text-[10px] h-5">{t.type.replace(/_/g, " ")}</Badge>
+
+                                            {t.fundraisingCampaign && (
+                                                <div className="flex items-center gap-1 text-blue-600 font-medium">
+                                                    <span>Campaign: {t.fundraisingCampaign.name}</span>
+                                                </div>
+                                            )}
+                                            {t.campout && (
+                                                <div className="flex items-center gap-1 text-amber-600 font-medium">
+                                                    <span>Camp: {t.campout.name}</span>
+                                                </div>
+                                            )}
+                                            {t.budgetCategory && <span>• {t.budgetCategory.name}</span>}
+                                            {t.scout && <span>• {t.scout.name}</span>}
+                                            {t.user && t.type === 'REIMBURSEMENT' && <span className="text-indigo-600 font-medium">• {t.user.name}</span>}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 md:gap-4 mt-2 md:mt-0">
+                                        {isAdmin && (t.fromAccount === 'MANUAL' || !t.description?.includes('Automated')) && (
+                                            <DeleteTransactionButton id={t.id} description={t.description} />
+                                        )}
+                                        <Badge variant={['APPROVED', 'PENDING'].includes(t.status) ? "outline" : "destructive"}>
+                                            {t.status}
+                                        </Badge>
+                                        <span className={`font-bold ${['EXPENSE', 'REIMBURSEMENT', 'CAMP_TRANSFER'].includes(t.type)
+                                            ? "text-red-600"
+                                            : "text-green-600"
+                                            }`}>
+                                            {['EXPENSE', 'REIMBURSEMENT', 'CAMP_TRANSFER'].includes(t.type) ? "-" : "+"}${Number(t.amount).toFixed(2)}
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2 md:gap-4 mt-2 md:mt-0">
-                                    {isAdmin && (t.fromAccount === 'MANUAL' || !['CAMP_TRANSFER', 'REIMBURSEMENT', 'IBA_DEPOSIT', 'IBA_RECLAIM'].includes(t.type)) && !t.description?.includes('Automated') && !t.description?.includes('Organizer Payout') && (
-                                        <DeleteTransactionButton id={t.id} description={t.description} />
-                                    )}
-                                    <Badge variant={['APPROVED', 'PENDING'].includes(t.status) ? "outline" : "destructive"}>
-                                        {t.status}
-                                    </Badge>
-                                    <span className={`font-bold ${['EXPENSE', 'REIMBURSEMENT', 'CAMP_TRANSFER'].includes(t.type)
-                                        ? "text-red-600"
-                                        : "text-green-600"
-                                        }`}>
-                                        {['EXPENSE', 'REIMBURSEMENT', 'CAMP_TRANSFER'].includes(t.type) ? "-" : "+"}${Number(t.amount).toFixed(2)}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 </CardContent>
             </Card>

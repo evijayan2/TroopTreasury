@@ -5,7 +5,7 @@ Secure, simple finance management for your scout troop.
 ## Features
 
 - **Financial Management**: Track IBA balances, campout costs, and troop transactions.
-- **Fundraising**: Support for both General (Donation) and Product Sale campaigns with automatic profit allocation.
+- **Fundraising**: Advanced support for General campaigns and **Multi-Product Sales** (e.g. Popcorn with different pricing tiers), including automatic profit calculation per item.
 - **Campout Management**: Register scouts and adults for events, track participation, and log expenses.
 - **Role-Based Access Control**: Different views and permissions for Admins, Financiers, Leaders, Parents, and Scouts.
 - **Database Backup/Restore**: Easily export and import your troop data.
@@ -27,10 +27,13 @@ Secure, simple finance management for your scout troop.
    ```
 3. Set up your environment variables:
    Copy `.env.example` to `.env` and configure your `DATABASE_URL` and `AUTH_SECRET`.
+   (Note: For local development, `db-migrate.js` supports loading form `.env` or `.env.local`)
 4. Initialize the database:
    ```bash
-   npx prisma db push
+   npx prisma generate
    npx prisma migrate dev
+   # Or use the project script
+   node scripts/db-migrate.js
    ```
 5. Run the development server:
    ```bash

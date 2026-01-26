@@ -199,10 +199,14 @@ export async function createFundraiser(prevState: any, formData: FormData) {
                 isComplianceApproved,
                 ibaPercentage: parseInt(ibaPercentage),
                 type: type as any,
-                productName,
-                productPrice: productPrice ? new Decimal(productPrice) : null,
-                productCost: productCost ? new Decimal(productCost) : null,
-                productIba: productIba ? new Decimal(productIba) : null,
+                products: (type === 'PRODUCT_SALE' && productName && productPrice) ? {
+                    create: {
+                        name: productName,
+                        price: new Decimal(productPrice),
+                        cost: productCost ? new Decimal(productCost) : new Decimal(0),
+                        ibaAmount: productIba ? new Decimal(productIba) : new Decimal(0)
+                    }
+                } : undefined
             }
         })
         revalidatePath("/dashboard/finance/fundraising")
@@ -316,6 +320,11 @@ export async function recordTransaction(prevState: any, formData: FormData) {
         })
 
         revalidatePath("/dashboard/finance")
+        if (fundraisingCampaignId) {
+            revalidatePath(`/dashboard/my-fundraising/${fundraisingCampaignId}`)
+            revalidatePath(`/dashboard/fundraising/campaigns/${fundraisingCampaignId}`)
+            revalidatePath(`/dashboard/finance/fundraising/${fundraisingCampaignId}`)
+        }
         return { success: true, message: "Transaction recorded" }
     } catch (error) {
         console.error("Transaction Error:", error)
@@ -428,21 +437,27 @@ export async function toggleFundraisingStatus(id: string) {
 
                 // 2. DISTRIBUTION LOGIC (Only if Closing)
                 if (newStatus === FundraisingStatus.CLOSED) {
-                    const sales = await tx.fundraisingSale.findMany({
-                        where: { campaignId: id }
+                    const orders = await tx.fundraisingOrder.findMany({
+                        where: { campaignId: id },
+                        include: { product: true }
                     })
 
                     let totalCollected = new Decimal(0)
                     let totalScoutShare = new Decimal(0)
 
-                    const price = campaign.productPrice || new Decimal(0)
-                    const ibaPerItem = campaign.productIba || new Decimal(0)
-
-                    for (const sale of sales) {
-                        const qty = new Decimal(sale.quantity)
+                    for (const order of orders) {
+                        const qty = new Decimal(order.quantity)
                         if (qty.equals(0)) continue
 
+                        // Find the relevant product, or fallback (for single product campaigns)
+                        const product = order.product || (await tx.campaignProduct.findFirst({ where: { campaignId: id } }))
+
+                        const price = product?.price || campaign.ticketPrice || new Decimal(0)
+                        const ibaPerItem = product?.ibaAmount || new Decimal(0)
+
                         const collected = qty.mul(price)
+                        // If product based, use specific amount. If general campaign, use percentage of profit?
+                        // This toggle action seems to assume flat amount per item.
                         const share = qty.mul(ibaPerItem)
 
                         totalCollected = totalCollected.plus(collected)
@@ -456,7 +471,7 @@ export async function toggleFundraisingStatus(id: string) {
                                     amount: share,
                                     description: `${campaign.name} - Scout Share`,
                                     fundraisingCampaignId: id,
-                                    scoutId: sale.scoutId,
+                                    scoutId: order.scoutId,
                                     approvedBy: session.user.id,
                                     status: 'APPROVED',
                                     userId: session.user.id,
@@ -466,7 +481,7 @@ export async function toggleFundraisingStatus(id: string) {
 
                             // Increment Scout Balance
                             await tx.scout.update({
-                                where: { id: sale.scoutId },
+                                where: { id: order.scoutId },
                                 data: { ibaBalance: { increment: share } }
                             })
                         }
@@ -603,9 +618,7 @@ export async function deleteTransaction(id: string) {
             where: { id }
         })
 
-        revalidatePath("/dashboard")
-        revalidatePath("/dashboard/finance")
-        revalidatePath("/dashboard/finance/expenses")
+        revalidatePath("/dashboard", "layout")
         return { success: true, message: "Transaction deleted" }
     } catch (error) {
         console.error("Delete Transaction Error:", error)
@@ -757,10 +770,12 @@ export async function recordProductSale(prevState: any, formData: FormData) {
 const fundraisingOrderSchema = z.object({
     campaignId: z.string().min(1),
     customerName: z.string().min(1, "Customer name is required"),
+    customerEmail: z.string().email("Invalid email").or(z.literal("")).optional(),
     quantity: z.coerce.number().int().min(1, "Quantity must be at least 1"),
     amountPaid: z.coerce.number().min(0, "Amount paid cannot be negative"),
     delivered: z.boolean().optional(),
-    scoutId: z.string().optional()
+    scoutId: z.string().optional(),
+    productId: z.string().optional()
 })
 
 export async function addOrder(prevState: any, formData: FormData) {
@@ -770,10 +785,12 @@ export async function addOrder(prevState: any, formData: FormData) {
     const rawData = {
         campaignId: formData.get("campaignId"),
         customerName: formData.get("customerName"),
+        customerEmail: formData.get("customerEmail") || "",
         quantity: formData.get("quantity"),
         amountPaid: formData.get("amountPaid"),
         delivered: formData.get("delivered") === "on",
-        scoutId: formData.get("scoutId")
+        scoutId: formData.get("scoutId"),
+        productId: formData.get("productId")
     }
 
     const validatedFields = fundraisingOrderSchema.safeParse(rawData)
@@ -782,7 +799,7 @@ export async function addOrder(prevState: any, formData: FormData) {
         return { error: "Invalid fields", issues: validatedFields.error.flatten() }
     }
 
-    const { campaignId, customerName, quantity, amountPaid, delivered, scoutId } = validatedFields.data
+    const { campaignId, customerName, customerEmail, quantity, amountPaid, delivered, scoutId, productId } = validatedFields.data
 
     let finalScoutId = scoutId
     if (!finalScoutId) {
@@ -800,14 +817,18 @@ export async function addOrder(prevState: any, formData: FormData) {
         await prisma.fundraisingOrder.create({
             data: {
                 campaignId,
-                scoutId: finalScoutId,
                 customerName,
+                customerEmail: customerEmail || null,
                 quantity,
                 amountPaid: new Decimal(amountPaid),
-                delivered: delivered || false
+                delivered: !!delivered,
+                scoutId: finalScoutId,
+                productId: productId || null
             }
         })
         revalidatePath(`/dashboard/my-fundraising/${campaignId}`)
+        revalidatePath(`/dashboard/fundraising/campaigns/${campaignId}`)
+        revalidatePath(`/dashboard/finance/fundraising/${campaignId}`)
         return { success: true, message: "Order added" }
     } catch (error) {
         console.error("Add Order Error:", error)
@@ -822,6 +843,8 @@ export async function deleteOrder(orderId: string, campaignId: string) {
     try {
         await prisma.fundraisingOrder.delete({ where: { id: orderId } })
         revalidatePath(`/dashboard/my-fundraising/${campaignId}`)
+        revalidatePath(`/dashboard/fundraising/campaigns/${campaignId}`)
+        revalidatePath(`/dashboard/finance/fundraising/${campaignId}`)
         return { success: true, message: "Order deleted" }
     } catch (error) {
         return { error: "Failed to delete order" }
@@ -838,6 +861,8 @@ export async function toggleOrderDelivered(orderId: string, campaignId: string, 
             data: { delivered: !currentStatus }
         })
         revalidatePath(`/dashboard/my-fundraising/${campaignId}`)
+        revalidatePath(`/dashboard/fundraising/campaigns/${campaignId}`)
+        revalidatePath(`/dashboard/finance/fundraising/${campaignId}`)
         return { success: true }
     } catch (error) {
         return { error: "Failed to update order" }

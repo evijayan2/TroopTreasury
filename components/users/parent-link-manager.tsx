@@ -12,6 +12,17 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -49,7 +60,6 @@ export function ParentLinkManager({ user, allScouts }: { user: any, allScouts: a
     }
 
     const handleUnlink = async (scoutId: string) => {
-        if (!confirm("Are you sure you want to unlink this scout?")) return
         const result = await unlinkParentFromScout(user.id, scoutId)
         if (result.success) {
             toast.success("Scout unlinked successfully")
@@ -108,21 +118,29 @@ export function ParentLinkManager({ user, allScouts }: { user: any, allScouts: a
                                 {parentLinks.map((link: any) => (
                                     <Badge key={link.scoutId} variant="outline" className="flex items-center gap-2 pl-2 pr-1 py-1">
                                         {link.scout.name}
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-4 w-4 rounded-full hover:bg-red-100 hover:text-red-600"
-                                                    onClick={() => handleUnlink(link.scoutId)}
                                                 >
                                                     <Trash2 className="h-3 w-3" />
                                                 </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Unlink scout</p>
-                                            </TooltipContent>
-                                        </Tooltip>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Unlink Scout?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Are you sure you want to unlink {link.scout.name} from this parent account?
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleUnlink(link.scoutId)}>Unlink</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </Badge>
                                 ))}
                             </div>

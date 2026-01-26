@@ -29,6 +29,7 @@ model User {
   transactions         Transaction[]  @relation("UserTransactions")
   preferredTheme       String?        @default("system")
   preferredColor       String?        @default("orange")
+  pushToken            String?
 }
 
 model Scout {
@@ -47,6 +48,7 @@ model Scout {
   sales        FundraisingSale[]
   orders       FundraisingOrder[]
   email        String?        @unique
+  volunteering FundraisingVolunteer[]
 }
 
 model ParentScout {
@@ -164,6 +166,7 @@ model BudgetCategory {
   transactions   Transaction[]
 }
 
+
 model FundraisingCampaign {
   id                   String        @id @default(uuid())
   name                 String
@@ -171,23 +174,63 @@ model FundraisingCampaign {
   endDate              DateTime?
   goal                 Decimal       @db.Decimal(10, 2)
   isComplianceApproved Boolean       @default(false)
-  ibaPercentage        Int               @default(0)
-  status               FundraisingStatus @default(ACTIVE)
+  ibaPercentage        Int           @default(0) // Used for simple % campaigns
+  status               FundraisingStatus @default(DRAFT)
   transactions         Transaction[]
   type                 FundraisingType @default(GENERAL)
-  productName          String?
-  productPrice         Decimal?      @db.Decimal(10, 2)
-  productCost          Decimal?      @db.Decimal(10, 2) // Vendor/Unit cost
-  productIba           Decimal?      @db.Decimal(10, 2)
+  
+  // Products
+  products             CampaignProduct[]
+  
+  // Shotgun / Event Fields
+  description          String?
+  ticketPrice          Decimal?      @db.Decimal(10, 2)
+  volunteerPercentage  Decimal?      @default(0) @db.Decimal(5, 2) // e.g. 5.00 for 5%
+  
+  // Notification Settings
+  sendThankYou         Boolean       @default(false)
+  thankYouTemplate     String?
+  sendEventInvite      Boolean       @default(false)
+
   sales                FundraisingSale[]
   orders               FundraisingOrder[]
+  volunteers           FundraisingVolunteer[]
+}
+
+model CampaignProduct {
+  id          String   @id @default(uuid())
+  campaignId  String
+  name        String
+  price       Decimal  @db.Decimal(10, 2)
+  cost        Decimal  @db.Decimal(10, 2)
+  ibaAmount   Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign    FundraisingCampaign @relation(fields: [campaignId], references: [id])
+  orders      FundraisingOrder[]
+
+  @@index([campaignId])
+}
+
+model FundraisingVolunteer {
+  id          String   @id @default(uuid())
+  campaignId  String
+  scoutId     String
+  campaign    FundraisingCampaign @relation(fields: [campaignId], references: [id])
+  scout       Scout               @relation(fields: [scoutId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([campaignId, scoutId])
 }
 
 model FundraisingOrder {
   id               String              @id @default(uuid())
   campaignId       String
   scoutId          String
+  productId        String?
   customerName     String
+  customerEmail    String?
   quantity         Int
   amountPaid       Decimal             @default(0) @db.Decimal(10, 2)
   delivered        Boolean             @default(false)
@@ -196,6 +239,7 @@ model FundraisingOrder {
 
   campaign         FundraisingCampaign @relation(fields: [campaignId], references: [id])
   scout            Scout               @relation(fields: [scoutId], references: [id])
+  product          CampaignProduct?    @relation(fields: [productId], references: [id])
 }
 
 model FundraisingSale {
@@ -218,6 +262,7 @@ enum FundraisingType {
 }
 
 enum FundraisingStatus {
+  DRAFT
   ACTIVE
   CLOSED
 }
@@ -258,6 +303,7 @@ enum TransactionType {
   EVENT_PAYMENT
   TROOP_PAYMENT
   IBA_DEPOSIT
+  SCOUT_CASH_TURN_IN
 }
 
 enum TransactionStatus {

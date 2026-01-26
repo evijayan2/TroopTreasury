@@ -6,8 +6,11 @@ import { formatCurrency } from "@/lib/utils"
 import * as React from "react"
 
 import { DataTableExport } from "@/components/ui/data-table-export"
+import { DeleteTransactionButton } from "./DeleteTransactionButton"
+import { useSession } from "next-auth/react"
 
 export interface TransactionItem {
+    id?: string
     description: string
     amount: number
     date?: string
@@ -29,6 +32,8 @@ interface FinanceCardProps {
 }
 
 export function FinanceCard({ title, value, description, icon, items, valueClassName, headerInfo }: FinanceCardProps) {
+    const { data: session } = useSession()
+    const isAdmin = ["ADMIN", "FINANCIER"].includes(session?.user?.role || "")
     const [dateStr, setDateStr] = React.useState("")
 
     React.useEffect(() => {
@@ -74,8 +79,9 @@ export function FinanceCard({ title, value, description, icon, items, valueClass
                     <table className="w-full text-sm">
                         <thead className="sticky top-0 bg-background border-b z-10">
                             <tr>
-                                <th className="text-left py-2 font-medium text-muted-foreground">Description</th>
-                                <th className="text-right py-2 font-medium text-muted-foreground">Amount</th>
+                                <th className="text-left py-2 font-medium text-muted-foreground font-mono uppercase tracking-wider text-[10px]">Description</th>
+                                <th className="text-right py-2 font-medium text-muted-foreground font-mono uppercase tracking-wider text-[10px]">Amount</th>
+                                {isAdmin && items.some(i => i.id) && <th className="w-10"></th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y">
@@ -89,6 +95,13 @@ export function FinanceCard({ title, value, description, icon, items, valueClass
                                         <td className={`py-2 text-right font-mono ${item.amount < 0 ? 'text-red-500' : 'text-green-600'}`}>
                                             {formatCurrency(item.amount)}
                                         </td>
+                                        {isAdmin && (
+                                            <td className="text-right pl-2">
+                                                {item.id && (
+                                                    <DeleteTransactionButton id={item.id} description={item.description} />
+                                                )}
+                                            </td>
+                                        )}
                                     </tr>
                                 ))
                             ) : (
@@ -104,6 +117,7 @@ export function FinanceCard({ title, value, description, icon, items, valueClass
                                     <td className={`py-3 text-right ${value < 0 ? 'text-red-500' : 'text-green-600'}`}>
                                         {formatCurrency(value)}
                                     </td>
+                                    {isAdmin && items.some(i => i.id) && <td></td>}
                                 </tr>
                             </tfoot>
                         )}

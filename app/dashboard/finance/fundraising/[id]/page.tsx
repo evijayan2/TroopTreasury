@@ -12,7 +12,8 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
             sales: {
                 include: { scout: true }
             },
-            transactions: true
+            transactions: true,
+            products: true
         }
     })
 

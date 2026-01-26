@@ -25,8 +25,9 @@ export function NavLinks({ role, permissions, scoutId }: NavLinksProps) {
             icon: DollarSign,
             permission: 'VIEW_TRANSACTIONS'
         },
-        { name: 'My Fundraising', href: '/dashboard/my-fundraising', icon: ShoppingBag, permission: 'VIEW_FUNDRAISING' },
+        { name: 'Fundraising', href: '/dashboard/fundraising', icon: TrendingUp, permission: 'MANAGE_FUNDRAISING' },
         { name: 'Campouts', href: '/dashboard/campouts', icon: Tent, permission: 'VIEW_CAMPOUTS' },
+        { name: 'My Fundraising', href: '/dashboard/my-fundraising', icon: ShoppingBag, permission: 'VIEW_FUNDRAISING' },
         { name: 'Reports', href: '/dashboard/reports', icon: FileText, permission: 'VIEW_REPORTS' },
         { name: 'Users', href: '/dashboard/users', icon: Users, permission: 'VIEW_USERS' },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings, permission: 'VIEW_SETTINGS' },
